@@ -45,33 +45,4 @@ class zsGameMenu {
     hide() {// 关闭menu菜单
         this.$menu.hide();
     }
-}class zsGamePlayground {
-    constructor(root) {
-        this.root = root;
-        this.$playground = $(`<div>游戏界面</div>`);
-        this.hide();
-        this.root.$zs_game.append(this.$playground);
-        this.start();
-    }
-    show() { //打开playground界面
-        this.$playground.show();
-    }
-    hide() {
-        this.$playground.hide();
-    }
-    start() {
-    }
-}class zsGame {
-    //构造函数
-    constructor(id) {
-        this.id = id;
-        //找到主对象的那个div即 zs_game
-        this.$zs_game = $('#' + id); 
-        this.menu = new zsGameMenu(this);
-        this.playground = new zsGamePlayground(this);
-        this.start();
-    }
-    start() {
-
-    }
 }
