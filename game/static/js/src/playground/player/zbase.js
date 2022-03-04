@@ -5,6 +5,9 @@ class player extends GameObject {
         this.ctx = this.playground.gameMap.ctx;
         this.x = x;
         this.y = y;
+        //移动方向
+        this.vx = 0;
+        this.vy = 0;
         this.radius = radius;
         this.color = color;
         this.isMe = isMe;
@@ -12,7 +15,11 @@ class player extends GameObject {
         this.eps = 0.1;
         this.isAlive = true;
     }
-    start() { }
+    start() {
+        if (this.isMe) {
+            this.add_listening_events();
+        }
+    }
     update() {
         this.render();
     }
@@ -32,4 +39,28 @@ class player extends GameObject {
             }
         }
     }
+    add_listening_events() {
+        let outer = this;
+        //取消右键菜单
+        this.playground.gameMap.$canvas.on("contextmenu", function () {
+            return false;
+        });
+        this.playground.gameMap.$canvas.mousedown(function (e) {
+            if (!outer.isAlive) {
+                return false;
+            }
+            let ee = e.which;
+            if (ee == 3) { //右键
+                outer.move_to(e.clientX, e.clientY);
+            }
+        });
+    }
+    move_to(tx, ty) {
+
+    }
+
+}
+let getDist = function (x1, y1, x2, y2) {
+    let dx = x2 - x1, dy = y2 - y1;
+    return Math.sqrt(dx * dx + dy * dy);
 }
