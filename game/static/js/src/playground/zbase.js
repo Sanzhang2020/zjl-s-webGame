@@ -1,9 +1,13 @@
 class zsGamePlayground {
     constructor(root) {
         this.root = root;
-        this.$playground = $(`<div>游戏界面</div>`);
-        this.hide();
+        this.$playground = $(`<div class="zs-game-playground"></div>`);
+        //this.hide();
         this.root.$zs_game.append(this.$playground);
+        this.width = this.$playground.width;
+        this.height = this.$playground.height;
+
+
         this.start();
     }
     show() { //打开playground界面

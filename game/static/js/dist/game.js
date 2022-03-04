@@ -48,9 +48,13 @@ class zsGameMenu {
 }class zsGamePlayground {
     constructor(root) {
         this.root = root;
-        this.$playground = $(`<div>游戏界面</div>`);
-        this.hide();
+        this.$playground = $(`<div class="zs-game-playground"></div>`);
+        //this.hide();
         this.root.$zs_game.append(this.$playground);
+        this.width = this.$playground.width;
+        this.height = this.$playground.height;
+
+
         this.start();
     }
     show() { //打开playground界面
@@ -67,7 +71,7 @@ class zsGameMenu {
         this.id = id;
         //找到主对象的那个div即 zs_game
         this.$zs_game = $('#' + id);
-        this.menu = new zsGameMenu(this);
+        //this.menu = new zsGameMenu(this);
         this.playground = new zsGamePlayground(this);
         this.start();
     }
