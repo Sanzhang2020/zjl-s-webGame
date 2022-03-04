@@ -45,16 +45,77 @@ class zsGameMenu {
     hide() {// 关闭menu菜单
         this.$menu.hide();
     }
+}let zs_game_objects = [];
+class GameObject {
+    constructor() {
+        zs_game_objects.push(this);
+
+        this.isStarted = false;
+        this.timedelta = 0;
+    }
+    start() { }
+    update() { }
+    on_destroy() { }
+    destroy() {
+        this.on_destroy();
+        for (let i = 0; i < zs_game_objects.length; i++) {
+            if (zs_game_objects[i] === this) {
+                zs_game_objects.splice(i, 1);
+                break;
+            }
+        }
+    }
+
+}
+let last_timestamp;
+let ZS_GAME_ANIMATION = function (timestamp) {
+    for (let i = 0; i < zs_game_objects.length; i++) {
+        let obj = zs_game_objects[i];
+        if (!obj.isStarted) {
+            obj.start();
+            obj.isStarted = true;
+        } else {
+            obj.timedelta = timestamp - last_timestamp;
+            obj.update();
+        }
+    }
+    last_timestamp = timestamp;
+    //不断递归调用这个
+    requestAnimationFrame(ZS_GAME_ANIMATION);
+};
+requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
+    constructor(playground) {
+        super();
+        this.playground = playground;
+        this.$canvas = $(`<canvas></canvas>`);
+        this.ctx = this.$canvas[0].getContext('2d');
+        //设置画布的大小
+        this.ctx.canvas.width = this.playground.width;
+        this.ctx.canvas.height = this.playground.height;
+        //常规操作，拼接DOM
+        this.playground.$playground.append(this.$canvas);
+
+    }
+    start() {
+
+    }
+    update() {
+        this.render();
+    }
+    render() {
+        this.ctx.fillStyle = "rgb(0, 0, 0, 0.2)";
+        this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    }
 }class zsGamePlayground {
     constructor(root) {
         this.root = root;
         this.$playground = $(`<div class="zs-game-playground"></div>`);
         //this.hide();
         this.root.$zs_game.append(this.$playground);
-        this.width = this.$playground.width;
-        this.height = this.$playground.height;
+        this.width = this.$playground.width();
+        this.height = this.$playground.height();
 
-
+        this.gameMap = new gameMap(this);
         this.start();
     }
     show() { //打开playground界面
