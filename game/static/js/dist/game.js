@@ -172,6 +172,7 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
         //两点间按直线距离行走，分别得到x，y方向的向量；
         this.vx = Math.cos(angle);
         this.vy = Math.sin(angle);
+        // console.log('tx:' + tx + 'ty:' + ty);
     }
     update_move() { //更新移动过程
         if (this.move_length < this.eps) {
@@ -202,7 +203,7 @@ let getDist = function (x1, y1, x2, y2) {
         this.gameMap = new gameMap(this);
         this.players = [];
         this.players.push(
-            new player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true)
+            new player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", true, this.height * 0.15)
         );
         this.start();
     }

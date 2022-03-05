@@ -10,7 +10,7 @@ class zsGamePlayground {
         this.gameMap = new gameMap(this);
         this.players = [];
         this.players.push(
-            new player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", this.height * 0.15, true)
+            new player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", true, this.height * 0.15)
         );
         this.start();
     }

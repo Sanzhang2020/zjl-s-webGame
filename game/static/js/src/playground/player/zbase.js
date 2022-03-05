@@ -64,6 +64,7 @@ class player extends GameObject {
         //两点间按直线距离行走，分别得到x，y方向的向量；
         this.vx = Math.cos(angle);
         this.vy = Math.sin(angle);
+        // console.log('tx:' + tx + 'ty:' + ty);
     }
     update_move() { //更新移动过程
         if (this.move_length < this.eps) {
