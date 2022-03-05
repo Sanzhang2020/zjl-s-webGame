@@ -112,7 +112,7 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class fireball extends GameObject {
     update() {
         this.update_move();
         this.render();
-
+        this.update_attack();
     }
     update_move() {
         if (this.move_dist < this.eps) {
@@ -126,7 +126,42 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class fireball extends GameObject {
             this.move_dist -= moved;
         }
     }
-}class gameMap extends GameObject {
+
+
+    //碰撞的方法。。我们这里写的是相互碰撞。
+    //判断是否是满足我们常规意义上的“碰撞”
+    is_satisfy_collision(obj) { //真正意义上的碰撞
+        if (this === obj) return false; //火球自己无法被攻击
+
+        if (this.player === obj) return false; //发射源（player）不会被攻击
+        return isCollision(this, obj);
+    }
+    //player和物体相互碰撞
+    hit(obj) {
+        obj.isAttacked(this); //玩家被火球攻击了。玩家，这里是obj 被this(火球)攻击了
+        this.isAttacked(obj);//火球被玩家攻击了
+    }
+    isAttacked(obj) { //被撞击而产生伤害
+        this.isAttacked_concrete(0, 0); //描述物体伤害值，这里是火球，直接消失吧。
+    }
+    isAttacked_concrete(angle, damage) {
+        this.destroy(); //直接消失
+    }
+    update_attack() {
+        for (let i = 0; i < zs_game_objects.length; i++) {
+            let obj = zs_game_objects[i];
+            if (this.is_satisfy_collision(obj)) {
+                this.hit(obj);
+                break; //火球只能碰撞一个物体，这里要break;
+            }
+        }
+    }
+}
+
+//全局函数，判断两物体是否碰撞,这里两球相切也算碰撞
+let isCollision = function (obj1, obj2) {
+    return getDist(obj1.x, obj1.y, obj2.x, obj2.y) < obj1.radius + obj2.radius;
+};class gameMap extends GameObject {
     constructor(playground) {
         super();
         this.playground = playground;
@@ -159,6 +194,11 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class fireball extends GameObject {
         //移动方向
         this.vx = 0;
         this.vy = 0;
+        //被攻击的方向；要有惯性
+        this.damage_x = 0;
+        this.damage_y = 0;
+        //被攻击后的惯性速度
+        this.damage_speed = 0;
         this.radius = radius;
         this.color = color;
         this.isMe = isMe;
@@ -167,6 +207,7 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class fireball extends GameObject {
         this.isAlive = true;
         this.move_length = 0;
         this.cur_skill = null;
+        this.frition_damage = 0;
     }
     start() {
         if (this.isMe) {
@@ -236,18 +277,27 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class fireball extends GameObject {
         // console.log('tx:' + tx + 'ty:' + ty);
     }
     update_move() { //更新移动过程
-        if (this.move_length < this.eps) {
+        if (this.damage_speed > this.eps) { //如果此时在被击退状态，则处于被控制状态，无法控制移动
+            //因为惯性而应该后移的距离
+            this.vx = this.vy = 0; //控制不了自己
             this.move_length = 0;
-            this.vx = this.vy = 0;
+            this.x += this.damage_x * this.damage_speed * this.timedelta / 1000;
+            this.y += this.damage_y * this.damage_speed * this.timedelta / 1000;
+            this.damage_speed *= this.frition_damage;
         } else {
-            //每个时间间隔下应该走的距离。
-            let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000); // s = v * delta t;
-            this.x += this.vx * moved;
-            this.y += this.vy * moved;
-            this.move_length -= moved;
+            if (this.move_length < this.eps) {
+                this.move_length = 0;
+                this.vx = this.vy = 0;
+            } else {
+                //每个时间间隔下应该走的距离。
+                let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000); // s = v * delta t;
+                this.x += this.vx * moved;
+                this.y += this.vy * moved;
+                this.move_length -= moved;
+            }
         }
     }
-    shoot_fireball(tx, ty) {
+    shoot_fireball(tx, ty) { //发射火球，这里只要给定坐标，计算参数，给fireball对象，由对象根据参数进行发射的动作。
         //console.log(tx, ty);
         let x = this.x, y = this.y;
         let radius = this.playground.height * 0.01;
@@ -274,11 +324,45 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class fireball extends GameObject {
         }
     }
 
+    //碰撞；相互碰撞；
+    isAttacked(obj) { //这里应该是被火球击中了，
+        let angle = Math.atan2(this.y - obj.y, this.x - obj.x);
+        let damage = obj.damage;//伤害
+        this.isAttacked_concrete(angle, damage);
+
+    }
+    //被具体伤害
+    isAttacked_concrete(angle, damage) {
+        this.radius -= damage; //半径就是血量；
+        console.log('this.radius' + this.radius);
+        this.frition_damage = 0.8; //摩檫力系数吧。。。大概
+        //如果去世了，那就不用计算了
+        if (this.isDied()) return false;
+
+        this.damage_x = Math.cos(angle);
+        this.damage_y = Math.sin(angle);
+
+        this.damage_speed = damage * 100; //被击退之后由于惯性产生的效果，会在极短时间内消失。
+
+
+    }
+    //判断this是否去世了
+    isDied() {
+        if (this.radius < this.eps * 10) {
+            this.destroy();
+            return true;
+        }
+        return false;
+    }
+
+
 }
+//全局函数，判断两点之间的距离
 let getDist = function (x1, y1, x2, y2) {
     let dx = x2 - x1, dy = y2 - y1;
     return Math.sqrt(dx * dx + dy * dy);
-};class zsGamePlayground {
+};
+class zsGamePlayground {
     constructor(root) {
         this.root = root;
         this.$playground = $(`<div class="zs-game-playground"></div>`);
@@ -294,7 +378,7 @@ let getDist = function (x1, y1, x2, y2) {
         );
         for (let i = 0; i < 5; i++) {
             this.players.push(
-                new player(this, this.width / 2, this.height / 2, this.height * 0.05, GET_RANDOM_COLOR, false, this.height * 0.15)
+                new player(this, this.width / 2, this.height / 2, this.height * 0.05, GET_RANDOM_COLOR(), false, this.height * 0.15)
             );
         }
         this.start();
@@ -308,15 +392,12 @@ let getDist = function (x1, y1, x2, y2) {
     start() {
     }
 }
-let HEX = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
-
+//获取随机颜色的方法
 let GET_RANDOM_COLOR = function () {
     let color = "#";
-    for (let i = 0; i < 6; ++i) {
-        color += HEX[Math.floor(Math.random() * 16)];
+    for (let i = 0; i < 6; i++) {
+        color += (Math.random() * 16 | 0).toString(16);
     }
-    // let num = Math.floor(255 * 255 * 255 * Math.random());
-    // color += num.toString(16);
     return color;
 };export class zsGame {
     //构造函数

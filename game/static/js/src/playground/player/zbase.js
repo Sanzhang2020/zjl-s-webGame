@@ -8,6 +8,11 @@ class player extends GameObject {
         //移动方向
         this.vx = 0;
         this.vy = 0;
+        //被攻击的方向；要有惯性
+        this.damage_x = 0;
+        this.damage_y = 0;
+        //被攻击后的惯性速度
+        this.damage_speed = 0;
         this.radius = radius;
         this.color = color;
         this.isMe = isMe;
@@ -16,6 +21,7 @@ class player extends GameObject {
         this.isAlive = true;
         this.move_length = 0;
         this.cur_skill = null;
+        this.frition_damage = 0;
     }
     start() {
         if (this.isMe) {
@@ -85,18 +91,27 @@ class player extends GameObject {
         // console.log('tx:' + tx + 'ty:' + ty);
     }
     update_move() { //更新移动过程
-        if (this.move_length < this.eps) {
+        if (this.damage_speed > this.eps) { //如果此时在被击退状态，则处于被控制状态，无法控制移动
+            //因为惯性而应该后移的距离
+            this.vx = this.vy = 0; //控制不了自己
             this.move_length = 0;
-            this.vx = this.vy = 0;
+            this.x += this.damage_x * this.damage_speed * this.timedelta / 1000;
+            this.y += this.damage_y * this.damage_speed * this.timedelta / 1000;
+            this.damage_speed *= this.frition_damage;
         } else {
-            //每个时间间隔下应该走的距离。
-            let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000); // s = v * delta t;
-            this.x += this.vx * moved;
-            this.y += this.vy * moved;
-            this.move_length -= moved;
+            if (this.move_length < this.eps) {
+                this.move_length = 0;
+                this.vx = this.vy = 0;
+            } else {
+                //每个时间间隔下应该走的距离。
+                let moved = Math.min(this.move_length, this.speed * this.timedelta / 1000); // s = v * delta t;
+                this.x += this.vx * moved;
+                this.y += this.vy * moved;
+                this.move_length -= moved;
+            }
         }
     }
-    shoot_fireball(tx, ty) {
+    shoot_fireball(tx, ty) { //发射火球，这里只要给定坐标，计算参数，给fireball对象，由对象根据参数进行发射的动作。
         //console.log(tx, ty);
         let x = this.x, y = this.y;
         let radius = this.playground.height * 0.01;
@@ -123,7 +138,40 @@ class player extends GameObject {
         }
     }
 
+    //碰撞；相互碰撞；
+    isAttacked(obj) { //这里应该是被火球击中了，
+        let angle = Math.atan2(this.y - obj.y, this.x - obj.x);
+        let damage = obj.damage;//伤害
+        this.isAttacked_concrete(angle, damage);
+
+    }
+    //被具体伤害
+    isAttacked_concrete(angle, damage) {
+        this.radius -= damage; //半径就是血量；
+        console.log('this.radius' + this.radius);
+        this.frition_damage = 0.8; //摩檫力系数吧。。。大概
+        //如果去世了，那就不用计算了
+        if (this.isDied()) return false;
+
+        this.damage_x = Math.cos(angle);
+        this.damage_y = Math.sin(angle);
+
+        this.damage_speed = damage * 100; //被击退之后由于惯性产生的效果，会在极短时间内消失。
+
+
+    }
+    //判断this是否去世了
+    isDied() {
+        if (this.radius < this.eps * 10) {
+            this.destroy();
+            return true;
+        }
+        return false;
+    }
+
+
 }
+//全局函数，判断两点之间的距离
 let getDist = function (x1, y1, x2, y2) {
     let dx = x2 - x1, dy = y2 - y1;
     return Math.sqrt(dx * dx + dy * dy);
