@@ -83,7 +83,50 @@ let ZS_GAME_ANIMATION = function (timestamp) {
     //不断递归调用这个
     requestAnimationFrame(ZS_GAME_ANIMATION);
 };
-requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
+requestAnimationFrame(ZS_GAME_ANIMATION);class fireball extends GameObject {
+    constructor(playground, player, x, y, radius, color, damage, vx, vy, speed, move_dist) {
+        super();
+        this.playground = playground;
+        this.ctx = this.playground.gameMap.ctx;
+        this.player = player;
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.damage = damage; //伤害
+        this.vx = vx;
+        this.vy = vy;
+        this.speed = speed;
+        this.move_dist = move_dist; //射程
+        this.eps = 0.1;
+    }
+    render() {
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.fillStyle = this.color;
+        this.ctx.fill();
+    }
+    start() {
+
+    }
+    update() {
+        this.update_move();
+        this.render();
+
+    }
+    update_move() {
+        if (this.move_dist < this.eps) {
+            this.destroy();
+            return false;
+        } else {
+            //同样的道理, 该时间间隔下，小球应该运动的距离
+            let moved = Math.min(this.move_dist, this.speed * this.timedelta / 1000);
+            this.x += this.vx * moved;
+            this.y += this.vy * moved;
+            this.move_dist -= moved;
+        }
+    }
+}class gameMap extends GameObject {
     constructor(playground) {
         super();
         this.playground = playground;
@@ -123,6 +166,7 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
         this.eps = 0.1;
         this.isAlive = true;
         this.move_length = 0;
+        this.cur_skill = null;
     }
     start() {
         if (this.isMe) {
@@ -132,6 +176,7 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
     update() {
         this.render();
         this.update_move();
+        this.update_AI();
     }
     render() {
         this.ctx.beginPath();
@@ -162,6 +207,22 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
             let ee = e.which;
             if (ee == 3) { //右键
                 outer.move_to(e.clientX, e.clientY);
+            } else if (ee === 1) {
+                if (outer.cur_skill === "fireball") {
+                    outer.shoot_fireball(e.clientX, e.clientY);
+                    return false;
+                }
+                outer.cur_skill = null;
+            }
+        });
+        $(window).keydown(function (e) {
+            if (!outer.isAlive) {
+                return false;
+            }
+            let ee = e.which;
+            if (ee == 81) { //key code ，可以去查
+                outer.cur_skill = "fireball"; //将技能选为fireball
+                return false;
             }
         });
     }
@@ -186,6 +247,32 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
             this.move_length -= moved;
         }
     }
+    shoot_fireball(tx, ty) {
+        //console.log(tx, ty);
+        let x = this.x, y = this.y;
+        let radius = this.playground.height * 0.01;
+        let color = "orange";
+        let damage = this.playground.height * 0.01;
+        let angle = Math.atan2(ty - this.y, tx - this.x);
+        let vx = Math.cos(angle), vy = Math.sin(angle);
+        let move_dist = this.playground.height * 0.5;
+        let speed = this.playground.height * 0.5;
+        new fireball(this.playground, this, x, y, radius, color, damage, vx, vy, speed, move_dist);
+    }
+    update_AI() { //实现简单的AI
+        if (this.isMe) {
+            return false;
+        }
+        this.update_AI_move();
+    }
+    update_AI_move() { //实现简单的AI移动
+        if (this.move_length < this.eps) { //运动停止， 重新随机生成一个target 坐标
+            //随机生成的x方向的坐标
+            let tx = Math.random() * this.playground.width;
+            let ty = Math.random() * this.playground.height;
+            this.move_to(tx, ty);
+        }
+    }
 
 }
 let getDist = function (x1, y1, x2, y2) {
@@ -205,6 +292,11 @@ let getDist = function (x1, y1, x2, y2) {
         this.players.push(
             new player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", true, this.height * 0.15)
         );
+        for (let i = 0; i < 5; i++) {
+            this.players.push(
+                new player(this, this.width / 2, this.height / 2, this.height * 0.05, GET_RANDOM_COLOR, false, this.height * 0.15)
+            );
+        }
         this.start();
     }
     show() { //打开playground界面
@@ -215,7 +307,18 @@ let getDist = function (x1, y1, x2, y2) {
     }
     start() {
     }
-}export class zsGame {
+}
+let HEX = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
+
+let GET_RANDOM_COLOR = function () {
+    let color = "#";
+    for (let i = 0; i < 6; ++i) {
+        color += HEX[Math.floor(Math.random() * 16)];
+    }
+    // let num = Math.floor(255 * 255 * 255 * Math.random());
+    // color += num.toString(16);
+    return color;
+};export class zsGame {
     //构造函数
     constructor(id) {
         this.id = id;

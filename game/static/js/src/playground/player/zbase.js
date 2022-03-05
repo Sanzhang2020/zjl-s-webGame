@@ -15,6 +15,7 @@ class player extends GameObject {
         this.eps = 0.1;
         this.isAlive = true;
         this.move_length = 0;
+        this.cur_skill = null;
     }
     start() {
         if (this.isMe) {
@@ -24,6 +25,7 @@ class player extends GameObject {
     update() {
         this.render();
         this.update_move();
+        this.update_AI();
     }
     render() {
         this.ctx.beginPath();
@@ -54,6 +56,22 @@ class player extends GameObject {
             let ee = e.which;
             if (ee == 3) { //右键
                 outer.move_to(e.clientX, e.clientY);
+            } else if (ee === 1) {
+                if (outer.cur_skill === "fireball") {
+                    outer.shoot_fireball(e.clientX, e.clientY);
+                    return false;
+                }
+                outer.cur_skill = null;
+            }
+        });
+        $(window).keydown(function (e) {
+            if (!outer.isAlive) {
+                return false;
+            }
+            let ee = e.which;
+            if (ee == 81) { //key code ，可以去查
+                outer.cur_skill = "fireball"; //将技能选为fireball
+                return false;
             }
         });
     }
@@ -76,6 +94,32 @@ class player extends GameObject {
             this.x += this.vx * moved;
             this.y += this.vy * moved;
             this.move_length -= moved;
+        }
+    }
+    shoot_fireball(tx, ty) {
+        //console.log(tx, ty);
+        let x = this.x, y = this.y;
+        let radius = this.playground.height * 0.01;
+        let color = "orange";
+        let damage = this.playground.height * 0.01;
+        let angle = Math.atan2(ty - this.y, tx - this.x);
+        let vx = Math.cos(angle), vy = Math.sin(angle);
+        let move_dist = this.playground.height * 0.5;
+        let speed = this.playground.height * 0.5;
+        new fireball(this.playground, this, x, y, radius, color, damage, vx, vy, speed, move_dist);
+    }
+    update_AI() { //实现简单的AI
+        if (this.isMe) {
+            return false;
+        }
+        this.update_AI_move();
+    }
+    update_AI_move() { //实现简单的AI移动
+        if (this.move_length < this.eps) { //运动停止， 重新随机生成一个target 坐标
+            //随机生成的x方向的坐标
+            let tx = Math.random() * this.playground.width;
+            let ty = Math.random() * this.playground.height;
+            this.move_to(tx, ty);
         }
     }
 
