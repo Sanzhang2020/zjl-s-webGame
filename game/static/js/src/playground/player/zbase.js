@@ -139,7 +139,7 @@ class player extends GameObject {
     }
 
     //碰撞；相互碰撞；
-    isAttacked(obj) { //这里应该是被火球击中了，
+    is_Attacked(obj) { //这里应该是被火球击中了，
         let angle = Math.atan2(this.y - obj.y, this.x - obj.x);
         let damage = obj.damage;//伤害
         this.isAttacked_concrete(angle, damage);
@@ -147,6 +147,7 @@ class player extends GameObject {
     }
     //被具体伤害
     isAttacked_concrete(angle, damage) {
+        this.explode_particle();
         this.radius -= damage; //半径就是血量；
         console.log('this.radius' + this.radius);
         this.frition_damage = 0.8; //摩檫力系数吧。。。大概
@@ -167,6 +168,18 @@ class player extends GameObject {
             return true;
         }
         return false;
+    }
+    explode_particle() {
+        for (let i = 0; i < 10 + Math.random() * 5; i++) {
+            let x = this.x, y = this.y;
+            let radius = this.radius / 3;
+            let angle = Math.PI * 2 * Math.random();
+            let vx = Math.cos(angle), vy = Math.sin(angle);
+            let color = this.color;
+            let speed = this.speed * 10;
+
+            new particle(this.playground, x, y, radius, color, vx, vy, speed);
+        }
     }
 
 

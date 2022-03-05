@@ -53,7 +53,7 @@ class fireball extends GameObject {
     }
     //player和物体相互碰撞
     hit(obj) {
-        obj.isAttacked(this); //玩家被火球攻击了。玩家，这里是obj 被this(火球)攻击了
+        obj.is_Attacked(this);//玩家被火球攻击了。玩家，这里是obj 被this(火球)攻击了
         this.isAttacked(obj);//火球被玩家攻击了
     }
     isAttacked(obj) { //被撞击而产生伤害
@@ -63,8 +63,8 @@ class fireball extends GameObject {
         this.destroy(); //直接消失
     }
     update_attack() {
-        for (let i = 0; i < zs_game_objects.length; i++) {
-            let obj = zs_game_objects[i];
+        for (let i = 0; i < this.playground.players.length; i++) {
+            let obj = this.playground.players[i];
             if (this.is_satisfy_collision(obj)) {
                 this.hit(obj);
                 break; //火球只能碰撞一个物体，这里要break;

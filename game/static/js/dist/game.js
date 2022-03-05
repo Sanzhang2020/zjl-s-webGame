@@ -138,7 +138,7 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class fireball extends GameObject {
     }
     //player和物体相互碰撞
     hit(obj) {
-        obj.isAttacked(this); //玩家被火球攻击了。玩家，这里是obj 被this(火球)攻击了
+        obj.is_Attacked(this);//玩家被火球攻击了。玩家，这里是obj 被this(火球)攻击了
         this.isAttacked(obj);//火球被玩家攻击了
     }
     isAttacked(obj) { //被撞击而产生伤害
@@ -148,8 +148,8 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class fireball extends GameObject {
         this.destroy(); //直接消失
     }
     update_attack() {
-        for (let i = 0; i < zs_game_objects.length; i++) {
-            let obj = zs_game_objects[i];
+        for (let i = 0; i < this.playground.players.length; i++) {
+            let obj = this.playground.players[i];
             if (this.is_satisfy_collision(obj)) {
                 this.hit(obj);
                 break; //火球只能碰撞一个物体，这里要break;
@@ -183,6 +183,46 @@ let isCollision = function (obj1, obj2) {
     render() {
         this.ctx.fillStyle = "rgb(0, 0, 0, 0.2)";
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    }
+}class particle extends GameObject {
+    constructor(playground, x, y, radius, color, vx, vy, speed) {
+        super();
+        this.playground = playground;
+        this.ctx = this.playground.gameMap.ctx;
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.vx = vx;
+        this.vy = vy;
+        this.speed = speed;
+        this.eps = 0.1;
+
+    }
+    render() {
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.fillStyle = this.color;
+        this.ctx.fill();
+    }
+    start() {
+        this.frition_speed = 0.8;
+        this.frition_radius = 0.8;
+    }
+    update() {
+        this.render();
+        this.update_move();
+    }
+    update_move() {
+        if (this.speed < this.eps || this.radius < this.eps) {
+            this.destroy();
+            return false;
+        }
+        this.x += this.vx * this.speed * this.timedelta / 1000;
+        this.y += this.vy * this.speed * this.timedelta / 1000;
+
+        this.speed *= this.frition_speed;
+        this.radius *= this.frition_radius;
     }
 }class player extends GameObject {
     constructor(playground, x, y, radius, color, isMe, speed) {
@@ -325,7 +365,7 @@ let isCollision = function (obj1, obj2) {
     }
 
     //碰撞；相互碰撞；
-    isAttacked(obj) { //这里应该是被火球击中了，
+    is_Attacked(obj) { //这里应该是被火球击中了，
         let angle = Math.atan2(this.y - obj.y, this.x - obj.x);
         let damage = obj.damage;//伤害
         this.isAttacked_concrete(angle, damage);
@@ -333,6 +373,7 @@ let isCollision = function (obj1, obj2) {
     }
     //被具体伤害
     isAttacked_concrete(angle, damage) {
+        this.explode_particle();
         this.radius -= damage; //半径就是血量；
         console.log('this.radius' + this.radius);
         this.frition_damage = 0.8; //摩檫力系数吧。。。大概
@@ -353,6 +394,18 @@ let isCollision = function (obj1, obj2) {
             return true;
         }
         return false;
+    }
+    explode_particle() {
+        for (let i = 0; i < 10 + Math.random() * 5; i++) {
+            let x = this.x, y = this.y;
+            let radius = this.radius / 3;
+            let angle = Math.PI * 2 * Math.random();
+            let vx = Math.cos(angle), vy = Math.sin(angle);
+            let color = this.color;
+            let speed = this.speed * 10;
+
+            new particle(this.playground, x, y, radius, color, vx, vy, speed);
+        }
     }
 
 
