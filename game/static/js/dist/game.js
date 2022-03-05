@@ -250,6 +250,7 @@ let isCollision = function (obj1, obj2) {
         this.frition_damage = 0;
     }
     start() {
+        this.cold_time = 5;//冷静期：5秒
         if (this.isMe) {
             this.add_listening_events();
         }
@@ -354,6 +355,9 @@ let isCollision = function (obj1, obj2) {
             return false;
         }
         this.update_AI_move();
+        //AI发射火球
+        if (!this.update_AI_cold_time()) return false; //没走完冷静器，不准开火；
+        this.update_AI_shoot_fireball();
     }
     update_AI_move() { //实现简单的AI移动
         if (this.move_length < this.eps) { //运动停止， 重新随机生成一个target 坐标
@@ -384,7 +388,7 @@ let isCollision = function (obj1, obj2) {
         this.damage_y = Math.sin(angle);
 
         this.damage_speed = damage * 100; //被击退之后由于惯性产生的效果，会在极短时间内消失。
-
+        this.speed *= 1.2; // 每次被击中增加百分之二十的速度
 
     }
     //判断this是否去世了
@@ -405,6 +409,20 @@ let isCollision = function (obj1, obj2) {
             let speed = this.speed * 10;
 
             new particle(this.playground, x, y, radius, color, vx, vy, speed);
+        }
+    }
+    update_AI_cold_time() {
+        if (this.cold_time > 0) { //如果处于冷静期，就不开火
+            this.cold_time -= this.timedelta / 1000; //timedelta是ms 单位是每个帧的时间间隔
+            return false;
+        }
+        return true;
+    }
+    update_AI_shoot_fireball() {
+        if (Math.random() < 1 / 180.0) { //每隔一定时间间隔发射一次
+            let player = this.playground.players[Math.floor(Math.random() * this.playground.players.length)]; //这个可以设置成随机
+            this.shoot_fireball(player.x, player.y); //发射火球
+
         }
     }
 
