@@ -1,7 +1,8 @@
 class zsGameMenu {
     //这个root是zs_game这个对象
-    constructor(root) {
+    constructor(root, OS) {
         this.root = root;
+        this.OS = OS;
         this.$menu = $(`
 <div class="zs-game-menu">
     <div class="zs-game-menu-field">
@@ -17,10 +18,12 @@ class zsGameMenu {
     </div>
 </div>        
 `);
+        //this.$menu.hide();
         this.root.$zs_game.append(this.$menu);
         this.$single = this.$menu.find('.zs-game-menu-field-item-single');
         this.$multi = this.$menu.find('.zs-game-menu-field-item-multi');
         this.$settings = this.$menu.find('.zs-game-menu-field-item-settings');
+
         this.start();
     }
     start() {
@@ -32,7 +35,7 @@ class zsGameMenu {
         //点击单人模式
         this.$single.click(function () {
             outer.hide();
-            outer.root.playground.show();
+            outer.root.playground.show("single mode");
         });
         this.$multi.click(function () {
 

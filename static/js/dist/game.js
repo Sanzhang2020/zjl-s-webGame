@@ -1,7 +1,8 @@
 class zsGameMenu {
     //这个root是zs_game这个对象
-    constructor(root) {
+    constructor(root, OS) {
         this.root = root;
+        this.OS = OS;
         this.$menu = $(`
 <div class="zs-game-menu">
     <div class="zs-game-menu-field">
@@ -17,10 +18,12 @@ class zsGameMenu {
     </div>
 </div>        
 `);
+        this.$menu.hide();
         this.root.$zs_game.append(this.$menu);
         this.$single = this.$menu.find('.zs-game-menu-field-item-single');
         this.$multi = this.$menu.find('.zs-game-menu-field-item-multi');
         this.$settings = this.$menu.find('.zs-game-menu-field-item-settings');
+
         this.start();
     }
     start() {
@@ -28,14 +31,16 @@ class zsGameMenu {
     }
     add_listening_events() {
         let outer = this;
-        this.$single.click(function(){
+
+        //点击单人模式
+        this.$single.click(function () {
             outer.hide();
-            outer.root.playground.show();
+            outer.root.playground.show("single mode");
         });
-        this.$multi.click(function(){
+        this.$multi.click(function () {
 
         });
-        this.$settings.click(function(){
+        this.$settings.click(function () {
 
         });
     }
@@ -45,7 +50,7 @@ class zsGameMenu {
     hide() {// 关闭menu菜单
         this.$menu.hide();
     }
-}let zs_game_objects = [];
+} let zs_game_objects = [];
 class GameObject {
     constructor() {
         zs_game_objects.push(this);
@@ -83,7 +88,7 @@ let ZS_GAME_ANIMATION = function (timestamp) {
     //不断递归调用这个
     requestAnimationFrame(ZS_GAME_ANIMATION);
 };
-requestAnimationFrame(ZS_GAME_ANIMATION);class fireball extends GameObject {
+requestAnimationFrame(ZS_GAME_ANIMATION); class fireball extends GameObject {
     constructor(playground, player, x, y, radius, color, damage, vx, vy, speed, move_dist) {
         super();
         this.playground = playground;
@@ -161,7 +166,7 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class fireball extends GameObject {
 //全局函数，判断两物体是否碰撞,这里两球相切也算碰撞
 let isCollision = function (obj1, obj2) {
     return getDist(obj1.x, obj1.y, obj2.x, obj2.y) < obj1.radius + obj2.radius;
-};class gameMap extends GameObject {
+}; class gameMap extends GameObject {
     constructor(playground) {
         super();
         this.playground = playground;
@@ -184,7 +189,7 @@ let isCollision = function (obj1, obj2) {
         this.ctx.fillStyle = "rgb(0, 0, 0, 0.2)";
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
-}class particle extends GameObject {
+} class particle extends GameObject {
     constructor(playground, x, y, radius, color, vx, vy, speed) {
         super();
         this.playground = playground;
@@ -224,7 +229,7 @@ let isCollision = function (obj1, obj2) {
         this.speed *= this.frition_speed;
         this.radius *= this.frition_radius;
     }
-}class player extends GameObject {
+} class player extends GameObject {
     constructor(playground, x, y, radius, color, isMe, speed) {
         super();
         this.playground = playground;
@@ -381,7 +386,6 @@ let isCollision = function (obj1, obj2) {
     isAttacked_concrete(angle, damage) {
         this.explode_particle();
         this.radius -= damage; //半径就是血量；
-        console.log('this.radius' + this.radius);
         this.frition_damage = 0.8; //摩檫力系数吧。。。大概
         //如果去世了，那就不用计算了
         if (this.isDied()) return false;
@@ -439,7 +443,7 @@ class zsGamePlayground {
     constructor(root) {
         this.root = root;
         this.$playground = $(`<div class="zs-game-playground"></div>`);
-        //this.hide();
+        this.hide();
         this.root.$zs_game.append(this.$playground);
         this.width = this.$playground.width();
         this.height = this.$playground.height();
@@ -472,13 +476,64 @@ let GET_RANDOM_COLOR = function () {
         color += (Math.random() * 16 | 0).toString(16);
     }
     return color;
-};export class zsGame {
+}; class Settings {//大写是因为想让它在前面。
+    //浏览器处理逻辑
+    constructor(root) {
+        //向客户端发送request时携带的信息
+        this.root = root;
+        this.platform = "WEB";
+        if (this.root.OS) this.platform = "ACAPP";
+
+        this.start();
+    }
+    start() {
+        this.getinfo();
+    }
+    register() { //打开注册页面
+
+    }
+    login() { //打开登录界面
+
+    }
+    hide() {
+
+    }
+    show() {
+
+    }
+    getinfo() { //获取信息
+        let outer = this;
+        //由浏览器向服务器
+        //ajax的作用： 不需要刷新页面的情况下，就可以产生局部刷新的效果
+        //异步的传输数据,局部刷新，我们管这个叫异步更新
+        //虽然他叫async javascripts and xml 但是它不仅支持xml也支持json
+        $.ajax({//发送一个ajax请求
+            url: "https://app1042.acapp.acwing.com.cn/settings/getinfo/",
+            type: "GET",
+            data: {
+                platform: outer.platform, //是什么平台
+            },
+            success: function (resp) { //服务器返回的response
+                //我们前面在服务器写的getinfo定义的response是json格式的
+                console.log(JSON.stringify(resp));
+                if (resp.result === 'success') {
+                    outer.hide();
+                    outer.root.menu.show(); //登陆成功后，隐藏这个登录界面，并显示菜单页面
+                } else {
+                    outer.login(); //没有登录就得让他登录
+                }
+            }
+        });
+    }
+}
+export class zsGame {
     //构造函数
     constructor(id) {
         this.id = id;
         //找到主对象的那个div即 zs_game
         this.$zs_game = $('#' + id);
-        //this.menu = new zsGameMenu(this);
+        this.settings = new Settings(this);
+        this.menu = new zsGameMenu(this);
         this.playground = new zsGamePlayground(this);
         this.start();
     }

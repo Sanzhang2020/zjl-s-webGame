@@ -155,7 +155,7 @@ class player extends GameObject {
     isAttacked_concrete(angle, damage) {
         this.explode_particle();
         this.radius -= damage; //半径就是血量；
-        console.log('this.radius' + this.radius);
+        //console.log('this.radius' + this.radius);
         this.frition_damage = 0.8; //摩檫力系数吧。。。大概
         //如果去世了，那就不用计算了
         if (this.isDied()) return false;

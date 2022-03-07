@@ -2,7 +2,7 @@ class zsGamePlayground {
     constructor(root) {
         this.root = root;
         this.$playground = $(`<div class="zs-game-playground"></div>`);
-        //this.hide();
+        this.hide();
         this.root.$zs_game.append(this.$playground);
         this.width = this.$playground.width();
         this.height = this.$playground.height();
