@@ -514,12 +514,12 @@ let GET_RANDOM_COLOR = function () {
             </div>
             <div class="zs-game-settings-username">
                 <div class="zs-game-settings-item">
-                    <input type="text" placeholder="请输入用户名" required>
+                    <input type="text" placeholder="请输入用户名">
                 </div>
             </div>
             <div class="zs-game-settings-password">
                 <div class="zs-game-settings-item">
-                    <input type="password" placeholder="请输入密码" required>
+                    <input type="password" placeholder="请输入密码">
                 </div>
             </div>
             <div class="zs-game-settings-submit">
@@ -528,7 +528,7 @@ let GET_RANDOM_COLOR = function () {
                 </div>
             </div>
             <div class="zs-game-settings-errorMessage">
-                用户不存在或密码错误
+                
             </div>
             <div class="zs-game-settings-option">
                 注册
@@ -538,23 +538,24 @@ let GET_RANDOM_COLOR = function () {
                 <img src="/static/image/settings/logo.png" width="120" height="24">
             </div>
         </div>
+
         <div class="zs-game-settings-register">
             <div class="zs-game-settings-title"> 
                 注册
             </div>
             <div class="zs-game-settings-username">
                 <div class="zs-game-settings-item">
-                    <input type="text" placeholder="请输入用户名" required>
+                    <input type="text" placeholder="用户名">
                 </div>
             </div>
-            <div class="zs-game-settings-password-first">
+            <div class="zs-game-settings-password zs-game-settings-password-first">
                 <div class="zs-game-settings-item">
-                    <input type="password" placeholder="请输入密码" required>
+                    <input type="password" placeholder="密码">
                 </div>
             </div>
-            <div class="zs-game-settings-password-second">
+            <div class="zs-game-settings-password zs-game-settings-password-second">
                 <div class="zs-game-settings-item">
-                    <input type="password" placeholder="确认密码" required>
+                    <input type="password" placeholder="确认密码">
                 </div>
             </div>
             <div class="zs-game-settings-submit">
@@ -563,7 +564,7 @@ let GET_RANDOM_COLOR = function () {
                 </div>
             </div>
             <div class="zs-game-settings-errorMessage">
-                用户不存在或密码不可用！
+                
             </div>
             <div class="zs-game-settings-option">
                 登录
@@ -585,11 +586,11 @@ let GET_RANDOM_COLOR = function () {
         this.$register_login = this.$register.find(`.zs-game-settings-option`);
 
         this.$login = this.$settings.find(".zs-game-settings-login"); // 登录界面
-        this.$login_username = this.$register.find(`.zs-game-settings-username input`);
-        this.$login_password = this.$register.find(`.zs-game-settings-password input`);
-        this.$login_submit = this.$register.find(`.zs-game-settings-submit button`);
-        this.$login_errorMessage = this.$register.find(`.zs-game-settings-errorMessage`);
-        this.$login_register = this.$register.find(`.zs-game-settings-option`);
+        this.$login_username = this.$login.find(`.zs-game-settings-username input`);
+        this.$login_password = this.$login.find(`.zs-game-settings-password input`);
+        this.$login_submit = this.$login.find(`.zs-game-settings-submit button`);
+        this.$login_errorMessage = this.$login.find(`.zs-game-settings-errorMessage`);
+        this.$login_register = this.$login.find(`.zs-game-settings-option`);
 
         this.$register.hide(); // 隐藏注册界面
 
@@ -654,6 +655,9 @@ let GET_RANDOM_COLOR = function () {
         this.$login_register.click(function () {
             outer.register();
         });
+        this.$login_submit.click(function () {
+            outer.login_on_remote();
+        });
     }
     add_listening_events_register() {
         let outer = this;
@@ -661,6 +665,47 @@ let GET_RANDOM_COLOR = function () {
         this.$register_login.click(function () {
             outer.login();
         });
+    }
+    register_on_remote() {
+
+    }
+    login_on_remote() {
+        let outer = this;
+
+        let username = this.$login_username.val(); //获取输入框的用户名；
+        let password = this.$login_password.val();//同上
+        this.$login_errorMessage.empty(); //清空错误信息；
+        //局部更新，使用Get方法传输数据（username,password)
+        $.ajax({
+            url: "https://app1042.acapp.acwing.com.cn/settings/login/",
+            type: "GET",
+            data: {
+                username: username,
+                password: password,
+            },
+            success: function (resp) {
+                console.log(resp);
+                if (resp.result === "success") {
+                    location.reload(); //重新刷新页面
+                } else {
+                    outer.$login_errorMessage.html(resp.result); //失败了就显示错误信息
+                }
+            }
+        });
+    }
+    logout_on_remote() {
+        if (this.platform === 'ACAPP') return false;
+
+        $.ajax({
+            url: "", //登出后应该访问的url
+            type: "GET",
+            success: function (resp) {
+                console.log(resp);
+                if (resp.result === "success") {
+                    location.reload();
+                }
+            }
+        })
     }
 }
 export class zsGame {
