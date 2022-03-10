@@ -18,7 +18,7 @@ class zsGameMenu {
     </div>
 </div>        
 `);
-        //this.$menu.hide();
+        this.$menu.hide();
         this.root.$zs_game.append(this.$menu);
         this.$single = this.$menu.find('.zs-game-menu-field-item-single');
         this.$multi = this.$menu.find('.zs-game-menu-field-item-multi');

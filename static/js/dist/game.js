@@ -50,7 +50,8 @@ class zsGameMenu {
     hide() {// 关闭menu菜单
         this.$menu.hide();
     }
-} let zs_game_objects = [];
+}
+let zs_game_objects = [];
 class GameObject {
     constructor() {
         zs_game_objects.push(this);
@@ -88,85 +89,7 @@ let ZS_GAME_ANIMATION = function (timestamp) {
     //不断递归调用这个
     requestAnimationFrame(ZS_GAME_ANIMATION);
 };
-requestAnimationFrame(ZS_GAME_ANIMATION); class fireball extends GameObject {
-    constructor(playground, player, x, y, radius, color, damage, vx, vy, speed, move_dist) {
-        super();
-        this.playground = playground;
-        this.ctx = this.playground.gameMap.ctx;
-        this.player = player;
-        this.x = x;
-        this.y = y;
-        this.radius = radius;
-        this.color = color;
-        this.damage = damage; //伤害
-        this.vx = vx;
-        this.vy = vy;
-        this.speed = speed;
-        this.move_dist = move_dist; //射程
-        this.eps = 0.1;
-    }
-    render() {
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-        this.ctx.fillStyle = this.color;
-        this.ctx.fill();
-    }
-    start() {
-
-    }
-    update() {
-        this.update_move();
-        this.render();
-        this.update_attack();
-    }
-    update_move() {
-        if (this.move_dist < this.eps) {
-            this.destroy();
-            return false;
-        } else {
-            //同样的道理, 该时间间隔下，小球应该运动的距离
-            let moved = Math.min(this.move_dist, this.speed * this.timedelta / 1000);
-            this.x += this.vx * moved;
-            this.y += this.vy * moved;
-            this.move_dist -= moved;
-        }
-    }
-
-
-    //碰撞的方法。。我们这里写的是相互碰撞。
-    //判断是否是满足我们常规意义上的“碰撞”
-    is_satisfy_collision(obj) { //真正意义上的碰撞
-        if (this === obj) return false; //火球自己无法被攻击
-
-        if (this.player === obj) return false; //发射源（player）不会被攻击
-        return isCollision(this, obj);
-    }
-    //player和物体相互碰撞
-    hit(obj) {
-        obj.is_Attacked(this);//玩家被火球攻击了。玩家，这里是obj 被this(火球)攻击了
-        this.isAttacked(obj);//火球被玩家攻击了
-    }
-    isAttacked(obj) { //被撞击而产生伤害
-        this.isAttacked_concrete(0, 0); //描述物体伤害值，这里是火球，直接消失吧。
-    }
-    isAttacked_concrete(angle, damage) {
-        this.destroy(); //直接消失
-    }
-    update_attack() {
-        for (let i = 0; i < this.playground.players.length; i++) {
-            let obj = this.playground.players[i];
-            if (this.is_satisfy_collision(obj)) {
-                this.hit(obj);
-                break; //火球只能碰撞一个物体，这里要break;
-            }
-        }
-    }
-}
-
-//全局函数，判断两物体是否碰撞,这里两球相切也算碰撞
-let isCollision = function (obj1, obj2) {
-    return getDist(obj1.x, obj1.y, obj2.x, obj2.y) < obj1.radius + obj2.radius;
-}; class gameMap extends GameObject {
+requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
     constructor(playground) {
         super();
         this.playground = playground;
@@ -189,7 +112,7 @@ let isCollision = function (obj1, obj2) {
         this.ctx.fillStyle = "rgb(0, 0, 0, 0.2)";
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
-} class particle extends GameObject {
+}class particle extends GameObject {
     constructor(playground, x, y, radius, color, vx, vy, speed) {
         super();
         this.playground = playground;
@@ -229,7 +152,7 @@ let isCollision = function (obj1, obj2) {
         this.speed *= this.frition_speed;
         this.radius *= this.frition_radius;
     }
-} class player extends GameObject {
+}class player extends GameObject {
     constructor(playground, x, y, radius, color, isMe, speed) {
         super();
         this.playground = playground;
@@ -253,8 +176,14 @@ let isCollision = function (obj1, obj2) {
         this.move_length = 0;
         this.cur_skill = null;
         this.frition_damage = 0;
+        if (this.isMe) {
+            this.img = new Image();// 头像的图片
+            this.img.src = this.playground.root.settings.photo; // 图床url
+        }
+
     }
     start() {
+
         this.cold_time = 5;//冷静期：5秒
         if (this.isMe) {
             this.add_listening_events();
@@ -266,10 +195,23 @@ let isCollision = function (obj1, obj2) {
         this.update_AI();
     }
     render() {
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-        this.ctx.fillStyle = this.color;
-        this.ctx.fill();
+        if (this.isMe) {
+            //如果是我的话，就上皮肤
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.stroke();
+            this.ctx.clip();
+
+            this.ctx.drawImage(this.img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+            this.ctx.restore();
+        } else { //如果不是我，就按原来辣么画
+            this.ctx.beginPath();
+            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.fillStyle = this.color;
+            this.ctx.fill();
+        }
+
     }
     on_destroy() { //在死之前干掉它，不然死了还能发炮弹
         this.isAlive = false;
@@ -386,6 +328,7 @@ let isCollision = function (obj1, obj2) {
     isAttacked_concrete(angle, damage) {
         this.explode_particle();
         this.radius -= damage; //半径就是血量；
+        //console.log('this.radius' + this.radius);
         this.frition_damage = 0.8; //摩檫力系数吧。。。大概
         //如果去世了，那就不用计算了
         if (this.isDied()) return false;
@@ -439,7 +382,85 @@ let getDist = function (x1, y1, x2, y2) {
     let dx = x2 - x1, dy = y2 - y1;
     return Math.sqrt(dx * dx + dy * dy);
 };
-class zsGamePlayground {
+class fireball extends GameObject {
+    constructor(playground, player, x, y, radius, color, damage, vx, vy, speed, move_dist) {
+        super();
+        this.playground = playground;
+        this.ctx = this.playground.gameMap.ctx;
+        this.player = player;
+        this.x = x;
+        this.y = y;
+        this.radius = radius;
+        this.color = color;
+        this.damage = damage; //伤害
+        this.vx = vx;
+        this.vy = vy;
+        this.speed = speed;
+        this.move_dist = move_dist; //射程
+        this.eps = 0.1;
+    }
+    render() {
+        this.ctx.beginPath();
+        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.fillStyle = this.color;
+        this.ctx.fill();
+    }
+    start() {
+
+    }
+    update() {
+        this.update_move();
+        this.render();
+        this.update_attack();
+    }
+    update_move() {
+        if (this.move_dist < this.eps) {
+            this.destroy();
+            return false;
+        } else {
+            //同样的道理, 该时间间隔下，小球应该运动的距离
+            let moved = Math.min(this.move_dist, this.speed * this.timedelta / 1000);
+            this.x += this.vx * moved;
+            this.y += this.vy * moved;
+            this.move_dist -= moved;
+        }
+    }
+
+
+    //碰撞的方法。。我们这里写的是相互碰撞。
+    //判断是否是满足我们常规意义上的“碰撞”
+    is_satisfy_collision(obj) { //真正意义上的碰撞
+        if (this === obj) return false; //火球自己无法被攻击
+
+        if (this.player === obj) return false; //发射源（player）不会被攻击
+        return isCollision(this, obj);
+    }
+    //player和物体相互碰撞
+    hit(obj) {
+        obj.is_Attacked(this);//玩家被火球攻击了。玩家，这里是obj 被this(火球)攻击了
+        this.isAttacked(obj);//火球被玩家攻击了
+    }
+    isAttacked(obj) { //被撞击而产生伤害
+        this.isAttacked_concrete(0, 0); //描述物体伤害值，这里是火球，直接消失吧。
+    }
+    isAttacked_concrete(angle, damage) {
+        this.destroy(); //直接消失
+    }
+    update_attack() {
+        for (let i = 0; i < this.playground.players.length; i++) {
+            let obj = this.playground.players[i];
+            if (this.is_satisfy_collision(obj)) {
+                this.hit(obj);
+                break; //火球只能碰撞一个物体，这里要break;
+            }
+        }
+    }
+}
+
+//全局函数，判断两物体是否碰撞,这里两球相切也算碰撞
+let isCollision = function (obj1, obj2) {
+    return getDist(obj1.x, obj1.y, obj2.x, obj2.y) < obj1.radius + obj2.radius;
+};class zsGamePlayground {
     constructor(root) {
         this.root = root;
         this.$playground = $(`<div class="zs-game-playground"></div>`);
@@ -476,31 +497,107 @@ let GET_RANDOM_COLOR = function () {
         color += (Math.random() * 16 | 0).toString(16);
     }
     return color;
-}; class Settings {//大写是因为想让它在前面。
+};class Settings {//大写是因为想让它在前面。
     //浏览器处理逻辑
     constructor(root) {
         //向客户端发送request时携带的信息
         this.root = root;
         this.platform = "WEB";
         if (this.root.OS) this.platform = "ACAPP";
+        this.username = "";
+        this.photo = "";
+        this.$settings = $(`
+<div class="zs-game-settings">
+        <div class="zs-game-settings-login">
+            <div class="zs-game-settings-title"> 
+                登录
+            </div>
+            <div class="zs-game-settings-username">
+                <div class="zs-game-settings-item">
+                    <input type="text" placeholder="请输入用户名" required>
+                </div>
+            </div>
+            <div class="zs-game-settings-password">
+                <div class="zs-game-settings-item">
+                    <input type="password" placeholder="请输入密码" required>
+                </div>
+            </div>
+            <div class="zs-game-settings-submit">
+                <div class="zs-game-settings-item">
+                    <button>登录</button>
+                </div>
+            </div>
+            <div class="zs-game-settings-errorMessage">
+                用户不存在或密码错误
+            </div>
+            <div class="zs-game-settings-option">
+                注册
+            </div>
+            <br>
+            <div class="zs-game-settings-tencent">
+                <img src="/static/image/settings/logo.png" width="120" height="24">
+            </div>
+        </div>
+        <div class="zs-game-settings-register">
+            <div class="zs-game-settings-title"> 
+                注册
+            </div>
+            <div class="zs-game-settings-username">
+                <div class="zs-game-settings-item">
+                    <input type="text" placeholder="请输入用户名" required>
+                </div>
+            </div>
+            <div class="zs-game-settings-password-first">
+                <div class="zs-game-settings-item">
+                    <input type="password" placeholder="请输入密码" required>
+                </div>
+            </div>
+            <div class="zs-game-settings-password-second">
+                <div class="zs-game-settings-item">
+                    <input type="password" placeholder="确认密码" required>
+                </div>
+            </div>
+            <div class="zs-game-settings-submit">
+                <div class="zs-game-settings-item">
+                    <button>注册</button>
+                </div>
+            </div>
+            <div class="zs-game-settings-errorMessage">
+                用户不存在或密码不可用！
+            </div>
+            <div class="zs-game-settings-option">
+                登录
+            </div>
+            <br>
+            <div class="zs-game-settings-tencent">
+                <img src="/static/image/settings/logo.png" width="120" height="24">
+            </div>
+        </div>
+</div>
+        `);
+        this.root.$zs_game.append(this.$settings);
+        this.$register = this.$settings.find(".zs-game-settings-register"); // 注册界面
+        this.$register_username = this.$register.find(`.zs-game-settings-username input`);
+        this.$register_password = this.$register.find(`.zs-game-settings-password-first input`);
+        this.$register_password_confirm = this.$register.find(`.zs-game-settings-password-second input`);
+        this.$register_submit = this.$register.find(`.zs-game-settings-submit button`);
+        this.$register_errorMessage = this.$register.find(`.zs-game-settings-errorMessage`);
+        this.$register_login = this.$register.find(`.zs-game-settings-option`);
+
+        this.$login = this.$settings.find(".zs-game-settings-login"); // 登录界面
+        this.$login_username = this.$register.find(`.zs-game-settings-username input`);
+        this.$login_password = this.$register.find(`.zs-game-settings-password input`);
+        this.$login_submit = this.$register.find(`.zs-game-settings-submit button`);
+        this.$login_errorMessage = this.$register.find(`.zs-game-settings-errorMessage`);
+        this.$login_register = this.$register.find(`.zs-game-settings-option`);
+
+        this.$register.hide(); // 隐藏注册界面
+
+        this.$login.hide(); // 隐藏登录界面
 
         this.start();
     }
-    start() {
-        this.getinfo();
-    }
-    register() { //打开注册页面
 
-    }
-    login() { //打开登录界面
-
-    }
-    hide() {
-
-    }
-    show() {
-
-    }
     getinfo() { //获取信息
         let outer = this;
         //由浏览器向服务器
@@ -515,14 +612,54 @@ let GET_RANDOM_COLOR = function () {
             },
             success: function (resp) { //服务器返回的response
                 //我们前面在服务器写的getinfo定义的response是json格式的
-                console.log(JSON.stringify(resp));
-                if (resp.result === 'success') {
+                console.log(resp);
+                if (resp.result === "success") {
+                    outer.username = resp.username;
+                    outer.photo = resp.photo;
                     outer.hide();
                     outer.root.menu.show(); //登陆成功后，隐藏这个登录界面，并显示菜单页面
                 } else {
                     outer.login(); //没有登录就得让他登录
                 }
             }
+        })
+    }
+
+
+    register() { //打开注册页面
+        this.$login.hide();
+        this.$register.show();
+    }
+    login() { //打开登录界面
+        this.$register.hide();
+        this.$login.show();
+    }
+    hide() {
+        this.$settings.hide();
+    }
+    show() {
+        this.$settings.show();
+    }
+    start() {
+        this.getinfo();
+        this.add_listening_events();
+    }
+    add_listening_events() {
+        this.add_listening_events_login();
+        this.add_listening_events_register();
+    }
+    add_listening_events_login() {
+        let outer = this;
+
+        this.$login_register.click(function () {
+            outer.register();
+        });
+    }
+    add_listening_events_register() {
+        let outer = this;
+
+        this.$register_login.click(function () {
+            outer.login();
         });
     }
 }
@@ -532,6 +669,7 @@ export class zsGame {
         this.id = id;
         //找到主对象的那个div即 zs_game
         this.$zs_game = $('#' + id);
+
         this.settings = new Settings(this);
         this.menu = new zsGameMenu(this);
         this.playground = new zsGamePlayground(this);

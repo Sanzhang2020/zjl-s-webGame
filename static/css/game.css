@@ -1,3 +1,122 @@
+.zs-game-settings {
+    width: 100%;
+    height: 100%;
+    background-image: url("/static/image/menu/th.jpg");
+    background-size: 100% 100%;
+    user-select: none;
+}
+.zs-game-settings-login{
+    height: 41vh;
+    width: 28vw;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+}
+
+.zs-game-settings-title {
+    top: auto;
+    color: black;
+    font-size: 3vh;
+    text-align: center;
+    padding-top: 2vh;
+    margin-bottom: 5vh;
+} 
+.zs-game-settings-username {
+    display: block;
+    height: 7vh;
+}
+.zs-game-settings-password{
+    display: block;
+    height: 7vh;
+}
+.zs-game-settings-item {
+    width: 100%;
+    height: 100%;
+}
+.zs-game-settings-item > input {
+    width: 85%;
+    line-height: 4vh;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border-radius: 1vh;
+    outline: none;
+}
+.zs-game-settings-submit{
+    display: block;
+    height: 7vh;
+}
+.zs-game-settings-item > button {
+    width: 85%;
+    padding: 10px 30px;
+    cursor: pointer;
+    display: block;
+    margin: auto;
+    background: linear-gradient(to right,#ff105f,#ffad06);
+    border:0;
+    outline: none;
+    border-radius: 30px;
+}
+.zs-game-settings-errorMessage {
+    color: red;
+    font-size: 0.8vh;
+    display: inline;
+    float: left;
+    padding-left: 2vw;
+}
+.zs-game-settings-option {
+    color: white;
+    font-size: 2vh;
+    display: inline;
+    float: right;
+    padding-right: 3vw;
+    cursor: pointer;
+}
+.zs-game-settings-tencent {
+    display: block;
+    height: 7vh;
+}
+.zs-game-settings-tencent > img {
+    position: relative;
+    top: 25%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    display: block;
+}
+/* 
+
+
+
+
+
+
+
+
+
+.zs-game-settings-acwing > div {
+    color: white;
+    font-size: 1.5vh;
+    text-align: center;
+    display: block;
+}
+*/
+.zs-game-settings-register{
+    height: 49vh;
+    width: 30vw;
+    position: relative;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+}  
+
+
 .zs-game-menu {
     width: 100%;
     height: 100%;

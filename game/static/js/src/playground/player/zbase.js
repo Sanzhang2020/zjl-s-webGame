@@ -22,8 +22,14 @@ class player extends GameObject {
         this.move_length = 0;
         this.cur_skill = null;
         this.frition_damage = 0;
+        if (this.isMe) {
+            this.img = new Image();// 头像的图片
+            this.img.src = this.playground.root.settings.photo; // 图床url
+        }
+
     }
     start() {
+
         this.cold_time = 5;//冷静期：5秒
         if (this.isMe) {
             this.add_listening_events();
@@ -35,10 +41,23 @@ class player extends GameObject {
         this.update_AI();
     }
     render() {
-        this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
-        this.ctx.fillStyle = this.color;
-        this.ctx.fill();
+        if (this.isMe) {
+            //如果是我的话，就上皮肤
+            this.ctx.save();
+            this.ctx.beginPath();
+            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.stroke();
+            this.ctx.clip();
+
+            this.ctx.drawImage(this.img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+            this.ctx.restore();
+        } else { //如果不是我，就按原来辣么画
+            this.ctx.beginPath();
+            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.fillStyle = this.color;
+            this.ctx.fill();
+        }
+
     }
     on_destroy() { //在死之前干掉它，不然死了还能发炮弹
         this.isAlive = false;
@@ -155,7 +174,7 @@ class player extends GameObject {
     isAttacked_concrete(angle, damage) {
         this.explode_particle();
         this.radius -= damage; //半径就是血量；
-        console.log('this.radius' + this.radius);
+        //console.log('this.radius' + this.radius);
         this.frition_damage = 0.8; //摩檫力系数吧。。。大概
         //如果去世了，那就不用计算了
         if (this.isDied()) return false;

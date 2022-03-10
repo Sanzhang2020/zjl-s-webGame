@@ -1,7 +1,8 @@
 class zsGameMenu {
     //这个root是zs_game这个对象
-    constructor(root) {
+    constructor(root, OS) {
         this.root = root;
+        this.OS = OS;
         this.$menu = $(`
 <div class="zs-game-menu">
     <div class="zs-game-menu-field">
