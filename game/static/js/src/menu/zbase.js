@@ -41,7 +41,7 @@ class zsGameMenu {
 
         });
         this.$settings.click(function () {
-
+            outer.root.settings.logout_on_remote();
         });
     }
     show() { //显示menu菜单,show 和hide 是有api的。

@@ -24,7 +24,7 @@ class player extends GameObject {
         this.frition_damage = 0;
         if (this.isMe) {
             this.img = new Image();// 头像的图片
-            this.img.src = this.playground.root.settings.photo; // 图床url
+            this.img.src = "https://s3.bmp.ovh/imgs/2022/03/99eb33d8f01d40c0.jpg";// this.playground.root.settings.photo; // 图床url
         }
 
     }

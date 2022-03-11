@@ -41,7 +41,7 @@ class zsGameMenu {
 
         });
         this.$settings.click(function () {
-
+            outer.root.settings.logout_on_remote();
         });
     }
     show() { //显示menu菜单,show 和hide 是有api的。
@@ -178,7 +178,7 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
         this.frition_damage = 0;
         if (this.isMe) {
             this.img = new Image();// 头像的图片
-            this.img.src = this.playground.root.settings.photo; // 图床url
+            this.img.src = "https://s3.bmp.ovh/imgs/2022/03/99eb33d8f01d40c0.jpg";// this.playground.root.settings.photo; // 图床url
         }
 
     }
@@ -665,9 +665,34 @@ let GET_RANDOM_COLOR = function () {
         this.$register_login.click(function () {
             outer.login();
         });
+        this.$register_submit.click(function () {
+            outer.register_on_remote();
+        });
     }
     register_on_remote() {
+        let outer = this;
+        let username = this.$register_username.val();
+        let password = this.$register_password.val();
+        let password_confirm = this.$register_password_confirm.val()
+        this.$register_errorMessage.empty()
 
+        $.ajax({
+            url: "https://app1042.acapp.acwing.com.cn/settings/register/",
+            type: "GET",
+            data: {
+                username: username,
+                password: password,
+                password_confirm: password_confirm,
+            },
+            success: function (resp) {
+                console.log(resp);
+                if (resp.result === "success") {
+                    location.reload();
+                } else {
+                    outer.$register_errorMessage.html(resp.result);
+                }
+            }
+        })
     }
     login_on_remote() {
         let outer = this;
@@ -697,7 +722,7 @@ let GET_RANDOM_COLOR = function () {
         if (this.platform === 'ACAPP') return false;
 
         $.ajax({
-            url: "", //登出后应该访问的url
+            url: "https://app1042.acapp.acwing.com.cn/settings/logout/", //登出后应该访问的url
             type: "GET",
             success: function (resp) {
                 console.log(resp);
