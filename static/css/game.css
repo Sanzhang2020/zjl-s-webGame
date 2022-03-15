@@ -78,17 +78,19 @@
     padding-right: 3vw;
     cursor: pointer;
 }
-.zs-game-settings-tencent {
-    display: block;
-    height: 7vh;
+.zs-game-settings-loginWay {
+    color:black;
+    height: 0.8vh;
+    font-size: 2.5vh;
+    display: inline;
+    float: left;
+    padding-left: 2vw;
 }
-.zs-game-settings-tencent > img {
-    position: relative;
-    top: 25%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+.zs-game-settings-loginWay-Acwing > img {
     cursor: pointer;
-    display: block;
+}
+.zs-game-settings-loginWay-tencent > img {
+    cursor: pointer;
 }
 .zs-game-settings-register{
     height: 49vh;

@@ -11,6 +11,8 @@ class Player(models.Model):
     user = models.OneToOneField(User, on_delete = models.CASCADE)
 # 新增一个字段，用来存储头像的URL，by the way 本地图片可用图床流转换成url
     photo = models.URLField(max_length = 256, blank = True)
+    #用来存储第三方网站绑定的player
+    openid = models.CharField(default = "", max_length = 256, blank = True, null = True)
 # 将这个表对象封装成一个str并返回，这个表需要外键user,所以会传入参数
     def __str__(self): 
         return str(self.user)

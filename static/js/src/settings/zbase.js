@@ -35,8 +35,14 @@ class Settings {//大写是因为想让它在前面。
                 注册
             </div>
             <br>
-            <div class="zs-game-settings-tencent">
-                <img src="/static/image/settings/logo.png" width="120" height="24">
+            <div class="zs-game-settings-loginWay">
+                更多登录方式:
+                <span class="zs-game-settings-loginWay-Acwing">
+                    <img src="/static/image/settings/acwing.png" width="16", height="16" alt="acwing图标">
+                </span>
+                <span class="zs-game-settings-loginWay-tencent">
+                    <img src="/static/image/settings/QQLogo.png" width="16" height="16" alt="qq图标">
+                </span>
             </div>
         </div>
 
@@ -71,8 +77,14 @@ class Settings {//大写是因为想让它在前面。
                 登录
             </div>
             <br>
-            <div class="zs-game-settings-tencent">
-                <img src="/static/image/settings/logo.png" width="120" height="24">
+            <div class="zs-game-settings-loginWay">
+                更多登录方式:
+                <span class="zs-game-settings-loginWay-Acwing">
+                    <img src="/static/image/settings/acwing.png" width="16", height="16" alt="acwing图标">
+                </span>
+                <span class="zs-game-settings-loginWay-tencent">
+                    <img src="/static/image/settings/QQLogo.png" width="16" height="16" alt="qq图标">
+                </span>
             </div>
         </div>
 </div>
@@ -92,7 +104,7 @@ class Settings {//大写是因为想让它在前面。
         this.$login_submit = this.$login.find(`.zs-game-settings-submit button`);
         this.$login_errorMessage = this.$login.find(`.zs-game-settings-errorMessage`);
         this.$login_register = this.$login.find(`.zs-game-settings-option`);
-
+        this.$acwing_login = this.$settings.find(`.zs-game-settings-loginWay-Acwing`);
         this.$register.hide(); // 隐藏注册界面
 
         this.$login.hide(); // 隐藏登录界面
@@ -147,8 +159,24 @@ class Settings {//大写是因为想让它在前面。
         this.add_listening_events();
     }
     add_listening_events() {
+        let outer = this;
         this.add_listening_events_login();
         this.add_listening_events_register();
+        this.$acwing_login.click(function () {
+            outer.acwing_login();
+        });
+    }
+    acwing_login() {
+        $.ajax({
+            url: "https://app1042.acapp.acwing.com.cn/settings/acwing/web/apply_code/",
+            type: "GET",
+            success: function (resp) {
+                console.log(resp);
+                if (resp.result === "success") {
+                    window.location.replace(resp.apply_code_url);
+                }
+            }
+        })
     }
     add_listening_events_login() {
         let outer = this;
