@@ -111,8 +111,16 @@ class Settings {//大写是因为想让它在前面。
 
         this.start();
     }
+    start() {
+        if (this.platform === "ACAPP") {
+            this.getinfo_acapp();
+        } else {
+            this.getinfo_web();
+            this.add_listening_events();
+        }
+    }
 
-    getinfo() { //获取信息
+    getinfo_web() { //获取信息
         let outer = this;
         //由浏览器向服务器
         //ajax的作用： 不需要刷新页面的情况下，就可以产生局部刷新的效果
@@ -136,10 +144,32 @@ class Settings {//大写是因为想让它在前面。
                     outer.login(); //没有登录就得让他登录
                 }
             }
-        })
+        });
     }
+    getinfo_acapp() {
+        let outer = this;
+        $.ajax({
+            url: "https://app1042.acapp.acwing.com.cn/settings/acwing/acapp/apply_code/",
+            type: "GET",
+            success: function (resp) {
+                if (resp.result === "success") {
+                    outer.acapp_login(resp.appid, resp.redirect_uri, resp.scope, resp.state);
+                }
+            }
+        });
 
-
+    }
+    acapp_login(appid, redirect_uri, scope, state) {
+        let outer = this;
+        this.root.AcWingOS.api.oauth2.authorize(appid, redirect_uri, scope, state, function (resp) {
+            if (resp.result === "success") {
+                outer.username = resp.username;
+                outer.photo = resp.photo;
+                outer.hide();
+                outer.root.menu.show();
+            }
+        });
+    }
     register() { //打开注册页面
         this.$login.hide();
         this.$register.show();
@@ -154,10 +184,7 @@ class Settings {//大写是因为想让它在前面。
     show() {
         this.$settings.show();
     }
-    start() {
-        this.getinfo();
-        this.add_listening_events();
-    }
+
     add_listening_events() {
         let outer = this;
         this.add_listening_events_login();

@@ -13,11 +13,12 @@ class fireball extends GameObject {
         this.vy = vy;
         this.speed = speed;
         this.move_dist = move_dist; //射程
-        this.eps = 0.1;
+        this.eps = 0.01;
     }
     render() {
+        this.scale = this.playground.scale;
         this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.arc(this.x * this.scale, this.y * this.scale, this.radius * this.scale, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }
@@ -27,7 +28,10 @@ class fireball extends GameObject {
     update() {
         this.update_move();
         this.render();
-        this.update_attack();
+        if (this.player.character !== "enemy") {
+            this.update_attack();
+        }
+
     }
     update_move() {
         if (this.move_dist < this.eps) {
@@ -54,6 +58,12 @@ class fireball extends GameObject {
     //player和物体相互碰撞
     hit(obj) {
         obj.is_Attacked(this);//玩家被火球攻击了。玩家，这里是obj 被this(火球)攻击了
+        let angle = Math.atan2(obj.y - this.y, obj.x - this.x);
+        console.log(obj);
+        if (this.playground.mode = "multi mode") {
+            this.playground.mps.send_attack(obj.uuid, obj.x, obj.y, angle, this.damage, this.uuid);
+        }
+
         this.isAttacked(obj);//火球被玩家攻击了
     }
     isAttacked(obj) { //被撞击而产生伤害
@@ -68,6 +78,15 @@ class fireball extends GameObject {
             if (this.is_satisfy_collision(obj)) {
                 this.hit(obj);
                 break; //火球只能碰撞一个物体，这里要break;
+            }
+        }
+    }
+    on_destroy() {
+        let fireballs = this.player.fireballs;
+        for (let i = 0; i < fireballs.length; i++) {
+            if (fireballs[i] === this) {
+                fireballs.splice(i, 1);
+                break;
             }
         }
     }

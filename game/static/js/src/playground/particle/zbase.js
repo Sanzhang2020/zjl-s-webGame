@@ -10,12 +10,13 @@ class particle extends GameObject {
         this.vx = vx;
         this.vy = vy;
         this.speed = speed;
-        this.eps = 0.1;
+        this.eps = 0.01;
 
     }
     render() {
+        this.scale = this.playground.scale;
         this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.arc(this.x * this.scale, this.y * this.scale, this.radius * this.scale, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }

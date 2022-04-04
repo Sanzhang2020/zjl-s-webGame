@@ -1,5 +1,6 @@
 class player extends GameObject {
-    constructor(playground, x, y, radius, color, isMe, speed) {
+    constructor(playground, x, y, radius, color, speed, character, username, photo) {
+        //console.log(character, username, photo);
         super();
         this.playground = playground;
         this.ctx = this.playground.gameMap.ctx;
@@ -15,49 +16,135 @@ class player extends GameObject {
         this.damage_speed = 0;
         this.radius = radius;
         this.color = color;
-        this.isMe = isMe;
+        this.character = character;
+        this.username = username;
+        this.photo = photo;
         this.speed = speed;
-        this.eps = 0.1;
+        this.eps = 0.01;
         this.isAlive = true;
         this.move_length = 0;
         this.cur_skill = null;
         this.frition_damage = 0;
-        if (this.isMe) {
+        this.spend_time = 0;
+        this.fireballs = [];
+        if (this.character !== "robot") {
             this.img = new Image();// 头像的图片
-            this.img.src = "https://s3.bmp.ovh/imgs/2022/03/99eb33d8f01d40c0.jpg";// this.playground.root.settings.photo; // 图床url
+            this.img.src = this.photo;// this.playground.root.settings.photo; // 图床url
+        }
+        if (this.character === "me") {
+            this.fireball_cold_time = 3;//火球冷却时间
+            this.fireball_img = new Image();
+            this.fireball_img.src = "https://s3.bmp.ovh/imgs/2022/04/04/dd4c4eb08b35c383.jpg";
+            this.blink_coldtime = 5; //闪现冷却时间
+            this.blink_img = new Image();
+            this.blink_img.src = "https://s3.bmp.ovh/imgs/2022/04/04/f4d9157dda4e7740.png";
         }
 
     }
     start() {
-
+        let outer = this;
+        this.playground.player_count++;
+        this.playground.noticeBoard.write("已就绪：" + this.playground.player_count + "人");
+        if (this.playground.player_count >= 3) {
+            this.playground.state = "fighting";
+            var start = Date.now();
+            var add = setInterval(function clock() {
+                var end = Date.now();
+                var t = Math.trunc((end - start) / 1000);
+                outer.playground.noticeBoard.write(getTimeFormat(t));
+            }, 1000);
+        }
         this.cold_time = 5;//冷静期：5秒
-        if (this.isMe) {
+        if (this.character === "me") {
             this.add_listening_events();
         }
     }
     update() {
+        this.spend_time += this.timedelta / 1000;
         this.render();
+        if (this.character === "me" && this.playground.state === "fighting") {
+            this.update_cold_time();
+        }
+
         this.update_move();
         this.update_AI();
     }
     render() {
-        if (this.isMe) {
-            //如果是我的话，就上皮肤
+        let scale = this.playground.scale;
+        if (this.character !== "robot") {
+            //如果是玩家的话，就渲染图片；
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
             this.ctx.stroke();
             this.ctx.clip();
-
-            this.ctx.drawImage(this.img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+            this.ctx.drawImage(this.img, (this.x - this.radius) * scale, (this.y - this.radius) * scale, this.radius * 2 * scale, this.radius * 2 * scale);
             this.ctx.restore();
         } else { //如果不是我，就按原来辣么画
             this.ctx.beginPath();
-            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
             this.ctx.fillStyle = this.color;
             this.ctx.fill();
         }
-
+        if (this.character === "me" && this.playground.state === "fighting") {
+            this.render_skill_coldtime();
+        }
+    }
+    render_skill_coldtime() {
+        let scale = this.playground.scale;
+        let x = 1.5, y = 0.9, r = 0.04;
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.arc(x * scale, y * scale, r * scale, 0, Math.PI * 2, false);
+        this.ctx.stroke();
+        this.ctx.clip();
+        this.ctx.drawImage(this.fireball_img, (x - r) * scale, (y - r) * scale, r * 2 * scale, r * 2 * scale);
+        this.ctx.restore();
+        //画一层阴影表示冷却
+        if (this.fireball_cold_time > 0) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x * scale, y * scale);
+            this.ctx.arc(x * scale, y * scale, r * scale, 0 - Math.PI / 2, Math.PI * 2 * (1 - this.fireball_cold_time / 3) - Math.PI / 2, true);
+            this.ctx.lineTo(x * scale, y * scale);
+            this.ctx.fillStyle = "rgb(0, 0, 255, 0.6)";
+            this.ctx.fill();
+        }
+        //画闪现图标
+        x = 1.62, y = 0.9, r = 0.04;
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.arc(x * scale, y * scale, r * scale, 0, Math.PI * 2, false);
+        this.ctx.stroke();
+        this.ctx.clip();
+        this.ctx.drawImage(this.blink_img, (x - r) * scale, (y - r) * scale, r * 2 * scale, r * 2 * scale);
+        this.ctx.restore();
+        //画一层阴影表示冷却
+        if (this.blink_coldtime > 0) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x * scale, y * scale);
+            this.ctx.arc(x * scale, y * scale, r * scale, 0 - Math.PI / 2, Math.PI * 2 * (1 - this.blink_coldtime / 5) - Math.PI / 2, true);
+            this.ctx.lineTo(x * scale, y * scale);
+            this.ctx.fillStyle = "rgb(0, 0, 255, 0.6)";
+            this.ctx.fill();
+        }
+    }
+    destroy_fireball(uuid) {
+        for (let i = 0; i < this.fireballs.length; i++) {
+            let fireball = this.fireballs[i];
+            if (fireball.uuid = uuid) {
+                fireball.destroy();
+                break;
+            }
+        }
+    }
+    blink(tx, ty) {
+        let distance = getDist(this.x, this.y, tx, ty);
+        distance = Math.min(distance, 0.8);
+        let angle = Math.atan2(ty - this.y, tx - this.x);
+        this.x += distance * Math.cos(angle);
+        this.y += distance * Math.sin(angle);
+        this.blink_coldtime = 5;
+        this.move_length = 0; //闪现完停止；
     }
     on_destroy() { //在死之前干掉它，不然死了还能发炮弹
         this.isAlive = false;
@@ -71,34 +158,68 @@ class player extends GameObject {
     }
     add_listening_events() {
         let outer = this;
+
         //取消右键菜单
         this.playground.gameMap.$canvas.on("contextmenu", function () {
             return false;
         });
         this.playground.gameMap.$canvas.mousedown(function (e) {
+            if (outer.playground.state !== "fighting") return false;
             if (!outer.isAlive) {
                 return false;
             }
             let ee = e.which;
             const rect = outer.ctx.canvas.getBoundingClientRect(); //从canvas里面获取这个矩形框框
-            let tx = e.clientX - rect.left, ty = e.clientY - rect.top;
+
             if (ee == 3) { //右键
+                let tx = (e.clientX - rect.left) / outer.playground.scale;
+                let ty = (e.clientY - rect.top) / outer.playground.scale;
                 outer.move_to(tx, ty);
+
+                if (outer.playground.mode === "multi mode") {
+                    outer.playground.mps.send_move_to(tx, ty);
+                }
             } else if (ee === 1) {
+
+                let tx = (e.clientX - rect.left) / outer.playground.scale;
+                let ty = (e.clientY - rect.top) / outer.playground.scale;
                 if (outer.cur_skill === "fireball") {
-                    outer.shoot_fireball(tx, ty);
+                    if (outer.fireball_cold_time > outer.eps) {
+                        return false;
+                    }
+                    let fireball = outer.shoot_fireball(tx, ty);
+
+                    if (outer.playground.mode === "multi mode") {
+                        outer.playground.mps.send_shoot_fireball(tx, ty, fireball.uuid);
+                    }
                     return false;
+                } else if (outer.cur_skill === "blink") {
+                    if (outer.blink_coldtime > outer.eps) {
+                        return false;
+                    }
+                    outer.blink(tx, ty);
                 }
                 outer.cur_skill = null;
             }
         });
         $(window).keydown(function (e) {
+            if (outer.playground.state !== "fighting") return true;
             if (!outer.isAlive) {
                 return false;
             }
             let ee = e.which;
-            if (ee == 81) { //key code ，可以去查
+
+            if (ee === 81) { //key code ，可以去查
+                if (outer.fireball_cold_time > outer.eps) {
+                    return true;
+                }
                 outer.cur_skill = "fireball"; //将技能选为fireball
+                return false;
+            } else if (ee === 70) {
+                if (outer.blink_coldtime > outer.eps) {
+                    return true;
+                }
+                outer.cur_skill = "blink";
                 return false;
             }
         });
@@ -133,32 +254,44 @@ class player extends GameObject {
             }
         }
     }
+    update_cold_time() {
+        this.fireball_cold_time -= this.timedelta / 1000;
+        this.fireball_cold_time = Math.max(this.fireball_cold_time, 0);
+
+        this.blink_coldtime -= this.timedelta / 1000;
+        this.blink_coldtime = Math.max(this.blink_coldtime, 0);
+    }
     shoot_fireball(tx, ty) { //发射火球，这里只要给定坐标，计算参数，给fireball对象，由对象根据参数进行发射的动作。
         //console.log(tx, ty);
         let x = this.x, y = this.y;
-        let radius = this.playground.height * 0.01;
+        let radius = 0.01;
         let color = "orange";
-        let damage = this.playground.height * 0.01;
+        let damage = 0.01;
         let angle = Math.atan2(ty - this.y, tx - this.x);
         let vx = Math.cos(angle), vy = Math.sin(angle);
-        let move_dist = this.playground.height * 0.5;
-        let speed = this.playground.height * 0.5;
-        new fireball(this.playground, this, x, y, radius, color, damage, vx, vy, speed, move_dist);
+        let move_dist = 0.5;
+        let speed = 0.5;
+
+        let fireballInstance = new fireball(this.playground, this, x, y, radius, color, damage, vx, vy, speed, move_dist);
+        this.fireballs.push(fireballInstance);
+        //需要获取火球的uuid
+        this.fireball_cold_time = 3;
+        return fireballInstance;
     }
     update_AI() { //实现简单的AI
-        if (this.isMe) {
+        if (this.character !== "robot") {
             return false;
         }
         this.update_AI_move();
         //AI发射火球
-        if (!this.update_AI_cold_time()) return false; //没走完冷静器，不准开火；
+        if (!this.update_AI_cold_time()) return false; //没走完冷静期，不准开火；
         this.update_AI_shoot_fireball();
     }
     update_AI_move() { //实现简单的AI移动
         if (this.move_length < this.eps) { //运动停止， 重新随机生成一个target 坐标
             //随机生成的x方向的坐标
-            let tx = Math.random() * this.playground.width;
-            let ty = Math.random() * this.playground.height;
+            let tx = Math.random() * this.playground.width / this.playground.scale;
+            let ty = Math.random() * this.playground.height / this.playground.scale;
             this.move_to(tx, ty);
         }
     }
@@ -186,9 +319,15 @@ class player extends GameObject {
         this.speed *= 1.2; // 每次被击中增加百分之二十的速度
 
     }
+    receive_attack(x, y, angle, damage, b_uuid, attacker) {
+        attacker.destroy_fireball(b_uuid);
+        this.x = x;
+        this.y = y;
+        this.isAttacked_concrete(angle, damage);
+    }
     //判断this是否去世了
     isDied() {
-        if (this.radius < this.eps * 10) {
+        if (this.radius < this.eps) {
             this.destroy();
             return true;
         }
@@ -227,4 +366,16 @@ class player extends GameObject {
 let getDist = function (x1, y1, x2, y2) {
     let dx = x2 - x1, dy = y2 - y1;
     return Math.sqrt(dx * dx + dy * dy);
+};
+
+const getTimeFormat = (value) => {
+    let h = Math.floor(value / 3600);
+    let m = Math.floor((value / 60) % 60);
+    let s = Math.floor(value % 60);
+
+    let str = "";
+    str += `${h}:`
+    str += `${m}:`
+    str += `${s}`
+    return str;
 };

@@ -38,7 +38,8 @@ class zsGameMenu {
             outer.root.playground.show("single mode");
         });
         this.$multi.click(function () {
-
+            outer.hide();
+            outer.root.playground.show("multi mode");
         });
         this.$settings.click(function () {
             outer.root.settings.logout_on_remote();
@@ -58,7 +59,17 @@ class GameObject {
 
         this.isStarted = false;
         this.timedelta = 0;
+        this.uuid = this.create_uuid();
     }
+    create_uuid() {
+        let res = "";
+        for (let i = 0; i < 8; i++) {
+            let x = parseInt(Math.floor(Math.random() * 10));  // 返回[0, 1)之间的数
+            res += x;
+        }
+        return res;
+    }
+
     start() { }
     update() { }
     on_destroy() { }
@@ -105,6 +116,12 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
     start() {
 
     }
+    resize() {
+        this.ctx.canvas.width = this.playground.width;
+        this.ctx.canvas.height = this.playground.height;
+        this.ctx.fillStyle = "rgba(0, 0, 0, 1)";
+        this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+    }
     update() {
         this.render();
     }
@@ -112,7 +129,31 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
         this.ctx.fillStyle = "rgb(0, 0, 0, 0.2)";
         this.ctx.fillRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     }
-}class particle extends GameObject {
+}class NoticeBoard extends GameObject {
+    constructor(playground) {
+        super();
+        this.playground = playground;
+        this.ctx = this.playground.gameMap.ctx;
+     
+        this.text = "已就绪 0 人";
+    }
+    start() {
+
+    }
+    write(text) {
+        this.text = text;
+    }
+    update() {
+        this.render();
+    }
+    render() {
+        this.ctx.font = "20px serif";
+        this.ctx.fillStyle = "white";
+        this.ctx.textAlign = "center";
+        this.ctx.fillText(this.text, this.playground.width / 2, 20);
+    }
+}
+class particle extends GameObject {
     constructor(playground, x, y, radius, color, vx, vy, speed) {
         super();
         this.playground = playground;
@@ -124,12 +165,13 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
         this.vx = vx;
         this.vy = vy;
         this.speed = speed;
-        this.eps = 0.1;
+        this.eps = 0.01;
 
     }
     render() {
+        this.scale = this.playground.scale;
         this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.arc(this.x * this.scale, this.y * this.scale, this.radius * this.scale, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }
@@ -153,7 +195,8 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
         this.radius *= this.frition_radius;
     }
 }class player extends GameObject {
-    constructor(playground, x, y, radius, color, isMe, speed) {
+    constructor(playground, x, y, radius, color, speed, character, username, photo) {
+        //console.log(character, username, photo);
         super();
         this.playground = playground;
         this.ctx = this.playground.gameMap.ctx;
@@ -169,49 +212,135 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
         this.damage_speed = 0;
         this.radius = radius;
         this.color = color;
-        this.isMe = isMe;
+        this.character = character;
+        this.username = username;
+        this.photo = photo;
         this.speed = speed;
-        this.eps = 0.1;
+        this.eps = 0.01;
         this.isAlive = true;
         this.move_length = 0;
         this.cur_skill = null;
         this.frition_damage = 0;
-        if (this.isMe) {
+        this.spend_time = 0;
+        this.fireballs = [];
+        if (this.character !== "robot") {
             this.img = new Image();// 头像的图片
-            this.img.src = "https://s3.bmp.ovh/imgs/2022/03/99eb33d8f01d40c0.jpg";// this.playground.root.settings.photo; // 图床url
+            this.img.src = this.photo;// this.playground.root.settings.photo; // 图床url
+        }
+        if (this.character === "me") {
+            this.fireball_cold_time = 3;//火球冷却时间
+            this.fireball_img = new Image();
+            this.fireball_img.src = "https://s3.bmp.ovh/imgs/2022/04/04/dd4c4eb08b35c383.jpg";
+            this.blink_coldtime = 5; //闪现冷却时间
+            this.blink_img = new Image();
+            this.blink_img.src = "https://s3.bmp.ovh/imgs/2022/04/04/f4d9157dda4e7740.png";
         }
 
     }
     start() {
-
+        let outer = this;
+        this.playground.player_count++;
+        this.playground.noticeBoard.write("已就绪：" + this.playground.player_count + "人");
+        if (this.playground.player_count >= 3) {
+            this.playground.state = "fighting";
+            var start = Date.now();
+            var add = setInterval(function clock() {
+                var end = Date.now();
+                var t = Math.trunc((end - start) / 1000);
+                outer.playground.noticeBoard.write(getTimeFormat(t));
+            }, 1000);
+        }
         this.cold_time = 5;//冷静期：5秒
-        if (this.isMe) {
+        if (this.character === "me") {
             this.add_listening_events();
         }
     }
     update() {
+        this.spend_time += this.timedelta / 1000;
         this.render();
+        if (this.character === "me" && this.playground.state === "fighting") {
+            this.update_cold_time();
+        }
+
         this.update_move();
         this.update_AI();
     }
     render() {
-        if (this.isMe) {
-            //如果是我的话，就上皮肤
+        let scale = this.playground.scale;
+        if (this.character !== "robot") {
+            //如果是玩家的话，就渲染图片；
             this.ctx.save();
             this.ctx.beginPath();
-            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
             this.ctx.stroke();
             this.ctx.clip();
-
-            this.ctx.drawImage(this.img, this.x - this.radius, this.y - this.radius, this.radius * 2, this.radius * 2);
+            this.ctx.drawImage(this.img, (this.x - this.radius) * scale, (this.y - this.radius) * scale, this.radius * 2 * scale, this.radius * 2 * scale);
             this.ctx.restore();
         } else { //如果不是我，就按原来辣么画
             this.ctx.beginPath();
-            this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+            this.ctx.arc(this.x * scale, this.y * scale, this.radius * scale, 0, Math.PI * 2, false);
             this.ctx.fillStyle = this.color;
             this.ctx.fill();
         }
-
+        if (this.character === "me" && this.playground.state === "fighting") {
+            this.render_skill_coldtime();
+        }
+    }
+    render_skill_coldtime() {
+        let scale = this.playground.scale;
+        let x = 1.5, y = 0.9, r = 0.04;
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.arc(x * scale, y * scale, r * scale, 0, Math.PI * 2, false);
+        this.ctx.stroke();
+        this.ctx.clip();
+        this.ctx.drawImage(this.fireball_img, (x - r) * scale, (y - r) * scale, r * 2 * scale, r * 2 * scale);
+        this.ctx.restore();
+        //画一层阴影表示冷却
+        if (this.fireball_cold_time > 0) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x * scale, y * scale);
+            this.ctx.arc(x * scale, y * scale, r * scale, 0 - Math.PI / 2, Math.PI * 2 * (1 - this.fireball_cold_time / 3) - Math.PI / 2, true);
+            this.ctx.lineTo(x * scale, y * scale);
+            this.ctx.fillStyle = "rgb(0, 0, 255, 0.6)";
+            this.ctx.fill();
+        }
+        //画闪现图标
+        x = 1.62, y = 0.9, r = 0.04;
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.arc(x * scale, y * scale, r * scale, 0, Math.PI * 2, false);
+        this.ctx.stroke();
+        this.ctx.clip();
+        this.ctx.drawImage(this.blink_img, (x - r) * scale, (y - r) * scale, r * 2 * scale, r * 2 * scale);
+        this.ctx.restore();
+        //画一层阴影表示冷却
+        if (this.blink_coldtime > 0) {
+            this.ctx.beginPath();
+            this.ctx.moveTo(x * scale, y * scale);
+            this.ctx.arc(x * scale, y * scale, r * scale, 0 - Math.PI / 2, Math.PI * 2 * (1 - this.blink_coldtime / 5) - Math.PI / 2, true);
+            this.ctx.lineTo(x * scale, y * scale);
+            this.ctx.fillStyle = "rgb(0, 0, 255, 0.6)";
+            this.ctx.fill();
+        }
+    }
+    destroy_fireball(uuid) {
+        for (let i = 0; i < this.fireballs.length; i++) {
+            let fireball = this.fireballs[i];
+            if (fireball.uuid = uuid) {
+                fireball.destroy();
+                break;
+            }
+        }
+    }
+    blink(tx, ty) {
+        let distance = getDist(this.x, this.y, tx, ty);
+        distance = Math.min(distance, 0.8);
+        let angle = Math.atan2(ty - this.y, tx - this.x);
+        this.x += distance * Math.cos(angle);
+        this.y += distance * Math.sin(angle);
+        this.blink_coldtime = 5;
+        this.move_length = 0; //闪现完停止；
     }
     on_destroy() { //在死之前干掉它，不然死了还能发炮弹
         this.isAlive = false;
@@ -225,34 +354,68 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
     }
     add_listening_events() {
         let outer = this;
+
         //取消右键菜单
         this.playground.gameMap.$canvas.on("contextmenu", function () {
             return false;
         });
         this.playground.gameMap.$canvas.mousedown(function (e) {
+            if (outer.playground.state !== "fighting") return false;
             if (!outer.isAlive) {
                 return false;
             }
             let ee = e.which;
             const rect = outer.ctx.canvas.getBoundingClientRect(); //从canvas里面获取这个矩形框框
-            let tx = e.clientX - rect.left, ty = e.clientY - rect.top;
+
             if (ee == 3) { //右键
+                let tx = (e.clientX - rect.left) / outer.playground.scale;
+                let ty = (e.clientY - rect.top) / outer.playground.scale;
                 outer.move_to(tx, ty);
+
+                if (outer.playground.mode === "multi mode") {
+                    outer.playground.mps.send_move_to(tx, ty);
+                }
             } else if (ee === 1) {
+
+                let tx = (e.clientX - rect.left) / outer.playground.scale;
+                let ty = (e.clientY - rect.top) / outer.playground.scale;
                 if (outer.cur_skill === "fireball") {
-                    outer.shoot_fireball(tx, ty);
+                    if (outer.fireball_cold_time > outer.eps) {
+                        return false;
+                    }
+                    let fireball = outer.shoot_fireball(tx, ty);
+
+                    if (outer.playground.mode === "multi mode") {
+                        outer.playground.mps.send_shoot_fireball(tx, ty, fireball.uuid);
+                    }
                     return false;
+                } else if (outer.cur_skill === "blink") {
+                    if (outer.blink_coldtime > outer.eps) {
+                        return false;
+                    }
+                    outer.blink(tx, ty);
                 }
                 outer.cur_skill = null;
             }
         });
         $(window).keydown(function (e) {
+            if (outer.playground.state !== "fighting") return true;
             if (!outer.isAlive) {
                 return false;
             }
             let ee = e.which;
-            if (ee == 81) { //key code ，可以去查
+
+            if (ee === 81) { //key code ，可以去查
+                if (outer.fireball_cold_time > outer.eps) {
+                    return true;
+                }
                 outer.cur_skill = "fireball"; //将技能选为fireball
+                return false;
+            } else if (ee === 70) {
+                if (outer.blink_coldtime > outer.eps) {
+                    return true;
+                }
+                outer.cur_skill = "blink";
                 return false;
             }
         });
@@ -287,32 +450,44 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
             }
         }
     }
+    update_cold_time() {
+        this.fireball_cold_time -= this.timedelta / 1000;
+        this.fireball_cold_time = Math.max(this.fireball_cold_time, 0);
+
+        this.blink_coldtime -= this.timedelta / 1000;
+        this.blink_coldtime = Math.max(this.blink_coldtime, 0);
+    }
     shoot_fireball(tx, ty) { //发射火球，这里只要给定坐标，计算参数，给fireball对象，由对象根据参数进行发射的动作。
         //console.log(tx, ty);
         let x = this.x, y = this.y;
-        let radius = this.playground.height * 0.01;
+        let radius = 0.01;
         let color = "orange";
-        let damage = this.playground.height * 0.01;
+        let damage = 0.01;
         let angle = Math.atan2(ty - this.y, tx - this.x);
         let vx = Math.cos(angle), vy = Math.sin(angle);
-        let move_dist = this.playground.height * 0.5;
-        let speed = this.playground.height * 0.5;
-        new fireball(this.playground, this, x, y, radius, color, damage, vx, vy, speed, move_dist);
+        let move_dist = 0.5;
+        let speed = 0.5;
+
+        let fireballInstance = new fireball(this.playground, this, x, y, radius, color, damage, vx, vy, speed, move_dist);
+        this.fireballs.push(fireballInstance);
+        //需要获取火球的uuid
+        this.fireball_cold_time = 3;
+        return fireballInstance;
     }
     update_AI() { //实现简单的AI
-        if (this.isMe) {
+        if (this.character !== "robot") {
             return false;
         }
         this.update_AI_move();
         //AI发射火球
-        if (!this.update_AI_cold_time()) return false; //没走完冷静器，不准开火；
+        if (!this.update_AI_cold_time()) return false; //没走完冷静期，不准开火；
         this.update_AI_shoot_fireball();
     }
     update_AI_move() { //实现简单的AI移动
         if (this.move_length < this.eps) { //运动停止， 重新随机生成一个target 坐标
             //随机生成的x方向的坐标
-            let tx = Math.random() * this.playground.width;
-            let ty = Math.random() * this.playground.height;
+            let tx = Math.random() * this.playground.width / this.playground.scale;
+            let ty = Math.random() * this.playground.height / this.playground.scale;
             this.move_to(tx, ty);
         }
     }
@@ -340,9 +515,15 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
         this.speed *= 1.2; // 每次被击中增加百分之二十的速度
 
     }
+    receive_attack(x, y, angle, damage, b_uuid, attacker) {
+        attacker.destroy_fireball(b_uuid);
+        this.x = x;
+        this.y = y;
+        this.isAttacked_concrete(angle, damage);
+    }
     //判断this是否去世了
     isDied() {
-        if (this.radius < this.eps * 10) {
+        if (this.radius < this.eps) {
             this.destroy();
             return true;
         }
@@ -382,7 +563,18 @@ let getDist = function (x1, y1, x2, y2) {
     let dx = x2 - x1, dy = y2 - y1;
     return Math.sqrt(dx * dx + dy * dy);
 };
-class fireball extends GameObject {
+
+const getTimeFormat = (value) => {
+    let h = Math.floor(value / 3600);
+    let m = Math.floor((value / 60) % 60);
+    let s = Math.floor(value % 60);
+
+    let str = "";
+    str += `${h}:`
+    str += `${m}:`
+    str += `${s}`
+    return str;
+};class fireball extends GameObject {
     constructor(playground, player, x, y, radius, color, damage, vx, vy, speed, move_dist) {
         super();
         this.playground = playground;
@@ -397,11 +589,12 @@ class fireball extends GameObject {
         this.vy = vy;
         this.speed = speed;
         this.move_dist = move_dist; //射程
-        this.eps = 0.1;
+        this.eps = 0.01;
     }
     render() {
+        this.scale = this.playground.scale;
         this.ctx.beginPath();
-        this.ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2, false);
+        this.ctx.arc(this.x * this.scale, this.y * this.scale, this.radius * this.scale, 0, Math.PI * 2, false);
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
     }
@@ -411,7 +604,10 @@ class fireball extends GameObject {
     update() {
         this.update_move();
         this.render();
-        this.update_attack();
+        if (this.player.character !== "enemy") {
+            this.update_attack();
+        }
+
     }
     update_move() {
         if (this.move_dist < this.eps) {
@@ -438,6 +634,12 @@ class fireball extends GameObject {
     //player和物体相互碰撞
     hit(obj) {
         obj.is_Attacked(this);//玩家被火球攻击了。玩家，这里是obj 被this(火球)攻击了
+        let angle = Math.atan2(obj.y - this.y, obj.x - this.x);
+        console.log(obj);
+        if (this.playground.mode = "multi mode") {
+            this.playground.mps.send_attack(obj.uuid, obj.x, obj.y, angle, this.damage, this.uuid);
+        }
+
         this.isAttacked(obj);//火球被玩家攻击了
     }
     isAttacked(obj) { //被撞击而产生伤害
@@ -455,40 +657,215 @@ class fireball extends GameObject {
             }
         }
     }
+    on_destroy() {
+        let fireballs = this.player.fireballs;
+        for (let i = 0; i < fireballs.length; i++) {
+            if (fireballs[i] === this) {
+                fireballs.splice(i, 1);
+                break;
+            }
+        }
+    }
 }
 
 //全局函数，判断两物体是否碰撞,这里两球相切也算碰撞
 let isCollision = function (obj1, obj2) {
     return getDist(obj1.x, obj1.y, obj2.x, obj2.y) < obj1.radius + obj2.radius;
-};class zsGamePlayground {
+};class MultiPlayerSocket {
+    constructor(playground) {
+        this.playground = playground;
+        this.ws = new WebSocket("wss://app1042.acapp.acwing.com.cn/wss/multiPlayer/");
+        this.uuid = null;
+        this.start();
+
+    }
+    start() {
+        this.receive();
+    }
+    get_player(uuid) {
+        let players = this.playground.players;
+        for (let i = 0; i < players.length; i++) {
+            if (players[i].uuid === uuid) {
+                return players[i];
+            }
+        }
+        return null;
+    }
+    receive() {
+        let outer = this;
+        this.ws.onmessage = function (e) {
+            let data = JSON.parse(e.data);
+            //console.log(data);
+            let uuid = data.uuid;
+            console.log('uuid:' + uuid + 'this.uuid' + outer.uuid);
+            if (uuid === outer.uuid) {
+                return false;
+            }
+
+            let event = data.event;
+            if (event === "create_player") {
+                outer.receive_create_player(uuid, data.username, data.photo);
+            }
+            else if (event === "move_to") {
+                outer.receive_move_to(uuid, data.tx, data.ty);
+            } else if (event === "shoot_fireball") {
+                outer.receive_shoot_fireball(uuid, data.tx, data.ty, data.b_uuid);
+            } else if (event === "attack") {
+                outer.receive_attack(uuid, data.attacked_uuid, data.x, data.y, data.angle, data.damage, data.b_uuid);
+            }
+        }
+    }
+    send_create_player(username, photo) {
+        let outer = this;
+        this.ws.send(JSON.stringify({
+            'event': "create_player",
+            'uuid': outer.uuid,
+            'username': username,
+            'photo': photo,
+        }));
+    }
+    send_move_to(tx, ty) {
+        let outer = this;
+        this.ws.send(JSON.stringify({
+            'event': "move_to",
+            'uuid': outer.uuid,
+            'tx': tx,
+            'ty': ty,
+        }));
+    }
+    receive_create_player(uuid, username, photo) {
+
+        let Player = new player(
+            this.playground,
+            this.playground.width / 2 / this.playground.scale,
+            0.5,
+            0.05,
+            "white",
+            0.15,
+            "enemy",
+            username,
+            photo
+        );
+        //console.log('player ' + Player);
+        Player.uuid = uuid;
+        this.playground.players.push(Player);
+    }
+
+    receive_move_to(uuid, tx, ty) {
+        let plyer = this.get_player(uuid);
+        //console.log(plyer);
+        if (plyer) {
+            plyer.move_to(tx, ty);
+        }
+    }
+    //同步普通攻击
+    send_shoot_fireball(tx, ty, b_uuid) {
+        let outer = this;
+        this.ws.send(JSON.stringify({
+            'event': "shoot_fireball",
+            'uuid': outer.uuid,
+            'tx': tx,
+            'ty': ty,
+            'b_uuid': b_uuid,
+        }));
+    }
+    receive_shoot_fireball(uuid, tx, ty, b_uuid) {
+        let player_shoot = this.get_player(uuid);
+        if (player_shoot) {
+            let fireballTemp = player_shoot.shoot_fireball(tx, ty);
+            fireballTemp.uuid = b_uuid;
+        }
+    }
+    send_attack(attacked_uuid, x, y, angle, damage, b_uuid) {
+        let outer = this;
+        this.ws.send(JSON.stringify({
+            'event': "attack",
+            'uuid': outer.uuid,
+            'attacked_uuid': attacked_uuid,
+            'x': x,
+            'y': y,
+            'angle': angle,
+            'damage': damage,
+            'b_uuid': b_uuid,
+        }));
+    }
+    receive_attack(uuid, attacked_uuid, x, y, angle, damage, b_uuid) {
+        let attacker = this.get_player(uuid);
+        let attackeder = this.get_player(attacked_uuid);
+        if (attackeder && attacker) {
+            attackeder.receive_attack(x, y, angle, damage, b_uuid, attacker);
+        }
+    }
+}
+
+class zsGamePlayground {
     constructor(root) {
         this.root = root;
         this.$playground = $(`<div class="zs-game-playground"></div>`);
         this.hide();
         this.root.$zs_game.append(this.$playground);
+        this.mps = new MultiPlayerSocket(this);
+        this.start();
+    }
+    start() {
+        let outer = this;
+        $(window).resize(function () {
+            outer.resize();
+        });
+    }
+    resize() { //统一游戏地图比例为16:9
+        //console.log("resize");
+        this.width = this.$playground.width();
+        this.height = this.$playground.height();
+        let unit = Math.min(this.width / 16, this.height / 9);
+        this.width = unit * 16;
+        this.height = unit * 9;
+        this.scale = this.height;
+        if (this.gameMap) this.gameMap.resize();
+    }
+
+    show(mode) { //打开playground界面
+        let outer = this;
+        this.$playground.show();
+
         this.width = this.$playground.width();
         this.height = this.$playground.height();
 
         this.gameMap = new gameMap(this);
+
+        this.mode = mode;
+        this.state = "waiting" //waiting -> fighting -> over
+        this.noticeBoard = new NoticeBoard(this);
+        this.player_count = 0;
+        this.resize();
         this.players = [];
+
         this.players.push(
-            new player(this, this.width / 2, this.height / 2, this.height * 0.05, "white", true, this.height * 0.15)
+            new player(this, this.width / 2 / this.scale, 0.5, 0.05, "white", 0.15, "me", this.root.settings.username, this.root.settings.photo)
         );
-        for (let i = 0; i < 5; i++) {
-            this.players.push(
-                new player(this, this.width / 2, this.height / 2, this.height * 0.05, GET_RANDOM_COLOR(), false, this.height * 0.15)
-            );
+        if (mode === "single mode") {
+            for (let i = 0; i < 5; i++) {
+                this.players.push(
+                    new player(this, this.width / 2 / this.scale, 0.5, 0.05, GET_RANDOM_COLOR(), 0.15, "robot")
+                );
+            }
         }
-        this.start();
-    }
-    show() { //打开playground界面
-        this.$playground.show();
+        else if (mode === "multi mode") {
+            let outer = this;
+            this.mps = new MultiPlayerSocket(this);
+            this.mps.uuid = this.players[0].uuid;
+            this.mps.ws.onopen = function () {
+                outer.mps.send_create_player(outer.root.settings.username, outer.root.settings.photo);
+            }
+        }
+
     }
     hide() {
         this.$playground.hide();
+
     }
-    start() {
-    }
+
+
 }
 //获取随机颜色的方法
 let GET_RANDOM_COLOR = function () {
@@ -610,8 +987,16 @@ let GET_RANDOM_COLOR = function () {
 
         this.start();
     }
+    start() {
+        if (this.platform === "ACAPP") {
+            this.getinfo_acapp();
+        } else {
+            this.getinfo_web();
+            this.add_listening_events();
+        }
+    }
 
-    getinfo() { //获取信息
+    getinfo_web() { //获取信息
         let outer = this;
         //由浏览器向服务器
         //ajax的作用： 不需要刷新页面的情况下，就可以产生局部刷新的效果
@@ -635,10 +1020,32 @@ let GET_RANDOM_COLOR = function () {
                     outer.login(); //没有登录就得让他登录
                 }
             }
-        })
+        });
     }
+    getinfo_acapp() {
+        let outer = this;
+        $.ajax({
+            url: "https://app1042.acapp.acwing.com.cn/settings/acwing/acapp/apply_code/",
+            type: "GET",
+            success: function (resp) {
+                if (resp.result === "success") {
+                    outer.acapp_login(resp.appid, resp.redirect_uri, resp.scope, resp.state);
+                }
+            }
+        });
 
-
+    }
+    acapp_login(appid, redirect_uri, scope, state) {
+        let outer = this;
+        this.root.AcWingOS.api.oauth2.authorize(appid, redirect_uri, scope, state, function (resp) {
+            if (resp.result === "success") {
+                outer.username = resp.username;
+                outer.photo = resp.photo;
+                outer.hide();
+                outer.root.menu.show();
+            }
+        });
+    }
     register() { //打开注册页面
         this.$login.hide();
         this.$register.show();
@@ -653,10 +1060,7 @@ let GET_RANDOM_COLOR = function () {
     show() {
         this.$settings.show();
     }
-    start() {
-        this.getinfo();
-        this.add_listening_events();
-    }
+
     add_listening_events() {
         let outer = this;
         this.add_listening_events_login();
@@ -763,11 +1167,11 @@ let GET_RANDOM_COLOR = function () {
 }
 export class zsGame {
     //构造函数
-    constructor(id) {
+    constructor(id, OS) {
         this.id = id;
         //找到主对象的那个div即 zs_game
         this.$zs_game = $('#' + id);
-
+        this.OS = OS;
         this.settings = new Settings(this);
         this.menu = new zsGameMenu(this);
         this.playground = new zsGamePlayground(this);
