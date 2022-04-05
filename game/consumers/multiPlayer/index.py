@@ -108,7 +108,7 @@ class MultiPlayer(AsyncWebsocketConsumer):
                 'b_uuid': data['b_uuid'],
             }
         )
-    async def move_to(self, data):
+    async def blink(self, data):
         await self.channel_layer.group_send(
             self.room_name,
             {

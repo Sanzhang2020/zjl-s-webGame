@@ -343,6 +343,9 @@ class particle extends GameObject {
         this.move_length = 0; //闪现完停止；
     }
     on_destroy() { //在死之前干掉它，不然死了还能发炮弹
+        if (this.character === "me") {
+            this.playground.state = "over";
+        }
         this.isAlive = false;
         for (let i = 0; i < this.playground.players.length; i++) {
             let player = this.playground.players[i];
@@ -392,6 +395,10 @@ class particle extends GameObject {
                 } else if (outer.cur_skill === "blink") {
                     if (outer.blink_coldtime > outer.eps) {
                         return false;
+                    }
+                    //广播blink函数
+                    if (outer.playground.mode === "multi mode") {
+                        outer.playground.mps.send_blink(tx, ty);
                     }
                     outer.blink(tx, ty);
                 }
@@ -712,6 +719,8 @@ let isCollision = function (obj1, obj2) {
                 outer.receive_shoot_fireball(uuid, data.tx, data.ty, data.b_uuid);
             } else if (event === "attack") {
                 outer.receive_attack(uuid, data.attacked_uuid, data.x, data.y, data.angle, data.damage, data.b_uuid);
+            } else if (event === "blink") {
+                outer.receive_blink(uuid, data.tx, data.ty);
             }
         }
     }
@@ -794,6 +803,22 @@ let isCollision = function (obj1, obj2) {
         let attackeder = this.get_player(attacked_uuid);
         if (attackeder && attacker) {
             attackeder.receive_attack(x, y, angle, damage, b_uuid, attacker);
+        }
+    }
+    send_blink(tx, ty) {
+        let outer = this;
+        this.ws.send(JSON.stringify({
+            'event': "blink",
+            'uuid': outer.uuid,
+            'tx': tx,
+            'ty': ty,
+        }));
+    }
+    receive_blink(uuid, tx, ty) {
+        let plyer = this.get_player(uuid);
+        //console.log(plyer);
+        if (plyer) {
+            plyer.blink(tx, ty);
         }
     }
 }

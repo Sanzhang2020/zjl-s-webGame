@@ -147,6 +147,9 @@ class player extends GameObject {
         this.move_length = 0; //闪现完停止；
     }
     on_destroy() { //在死之前干掉它，不然死了还能发炮弹
+        if (this.character === "me") {
+            this.playground.state = "over";
+        }
         this.isAlive = false;
         for (let i = 0; i < this.playground.players.length; i++) {
             let player = this.playground.players[i];
@@ -196,6 +199,10 @@ class player extends GameObject {
                 } else if (outer.cur_skill === "blink") {
                     if (outer.blink_coldtime > outer.eps) {
                         return false;
+                    }
+                    //广播blink函数
+                    if (outer.playground.mode === "multi mode") {
+                        outer.playground.mps.send_blink(tx, ty);
                     }
                     outer.blink(tx, ty);
                 }
