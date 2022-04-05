@@ -100,11 +100,80 @@ let ZS_GAME_ANIMATION = function (timestamp) {
     //不断递归调用这个
     requestAnimationFrame(ZS_GAME_ANIMATION);
 };
-requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
+requestAnimationFrame(ZS_GAME_ANIMATION);class ChatField {
+    constructor(playground) {
+        this.playground = playground;
+
+        this.$history = $(`<div class = "zs-game-chat-field-history">历史记录</div>`);
+        this.$input = $(`<input type="text" class="zs-game-chat-field-input">`);
+        this.$history.hide();
+        this.$input.hide();
+
+        this.func_id = null;
+
+        this.playground.$playground.append(this.$history);
+        this.playground.$playground.append(this.$input);
+        this.start();
+    }
+    start() {
+        this.add_listening_events();
+    }
+
+    add_listening_events() {
+        let outer = this;
+        this.$input.keydown(function (e) {
+            if (e.which === 27) { //按下esc
+                outer.hide_input();
+                return false;
+            } else if (e.which === 13) { //按下enter
+                let username = outer.playground.root.settings.username;
+                let text = outer.$input.val();
+                if (text) {
+                    outer.$input.val("");
+                    outer.add_message(username, text);
+                    outer.playground.mps.send_message(username, text);
+                }
+                return false;
+            }
+        });
+    }
+    render_message(message) {
+        return $(`<div>${message}</div>`);
+    }
+    add_message(username, text) {
+        this.show_history();
+        let message = `[${username}]${text}`;
+        this.$history.append(this.render_message(message));
+        this.$history.scrollTop(this.$history[0].scrollHeight);
+    }
+    show_history() {
+        let outer = this;
+        this.$history.fadeIn();
+
+        if (this.func_id) clearTimeout(this.func_id);
+
+        this.func_id = setTimeout(function () {
+            outer.$history.fadeOut();
+            outer.func_id = null;
+        }, 3000);
+    }
+    show_input() {
+        this.show_history();
+
+        this.$input.show();
+        this.$input.focus();
+    }
+    hide_input() {
+        this.$input.hide();
+        this.playground.gameMap.$canvas.focus();
+    }
+}
+
+class gameMap extends GameObject {
     constructor(playground) {
         super();
         this.playground = playground;
-        this.$canvas = $(`<canvas></canvas>`);
+        this.$canvas = $(`<canvas tabindex=0></canvas>`);
         this.ctx = this.$canvas[0].getContext('2d');
         //设置画布的大小
         this.ctx.canvas.width = this.playground.width;
@@ -114,7 +183,7 @@ requestAnimationFrame(ZS_GAME_ANIMATION);class gameMap extends GameObject {
 
     }
     start() {
-
+        this.$canvas.focus();
     }
     resize() {
         this.ctx.canvas.width = this.playground.width;
@@ -217,7 +286,6 @@ class particle extends GameObject {
         this.photo = photo;
         this.speed = speed;
         this.eps = 0.01;
-        this.isAlive = true;
         this.move_length = 0;
         this.cur_skill = null;
         this.frition_damage = 0;
@@ -346,7 +414,6 @@ class particle extends GameObject {
         if (this.character === "me") {
             this.playground.state = "over";
         }
-        this.isAlive = false;
         for (let i = 0; i < this.playground.players.length; i++) {
             let player = this.playground.players[i];
             if (player === this) {
@@ -363,10 +430,8 @@ class particle extends GameObject {
             return false;
         });
         this.playground.gameMap.$canvas.mousedown(function (e) {
-            if (outer.playground.state !== "fighting") return false;
-            if (!outer.isAlive) {
-                return false;
-            }
+
+            if (outer.playground.state !== "fighting") return true;
             let ee = e.which;
             const rect = outer.ctx.canvas.getBoundingClientRect(); //从canvas里面获取这个矩形框框
 
@@ -405,11 +470,18 @@ class particle extends GameObject {
                 outer.cur_skill = null;
             }
         });
-        $(window).keydown(function (e) {
-            if (outer.playground.state !== "fighting") return true;
-            if (!outer.isAlive) {
-                return false;
+        this.playground.gameMap.$canvas.keydown(function (e) {
+            if (e.which === 13) { //enter
+                if (outer.playground.mode === "multi mode") { //打开聊天框
+                    outer.playground.chat_field.show_input();
+                    return false;
+                }
+            } else if (e.which === 27) {
+                if (outer.playground.mode === "multi mode") {
+                    outer.playground.chat_field.hide_input();
+                }
             }
+            if (outer.playground.state !== "fighting") return true;
             let ee = e.which;
 
             if (ee === 81) { //key code ，可以去查
@@ -530,7 +602,7 @@ class particle extends GameObject {
     }
     //判断this是否去世了
     isDied() {
-        if (this.radius < this.eps) {
+        if (this.radius * this.playground.scale < this.eps) {
             this.destroy();
             return true;
         }
@@ -721,6 +793,8 @@ let isCollision = function (obj1, obj2) {
                 outer.receive_attack(uuid, data.attacked_uuid, data.x, data.y, data.angle, data.damage, data.b_uuid);
             } else if (event === "blink") {
                 outer.receive_blink(uuid, data.tx, data.ty);
+            } else if (event === "message") {
+                outer.receive_message(uuid, data.username, data.text);
             }
         }
     }
@@ -821,6 +895,20 @@ let isCollision = function (obj1, obj2) {
             plyer.blink(tx, ty);
         }
     }
+    send_message(username, text) {
+        let outer = this;
+        this.ws.send(JSON.stringify({
+            'event': "message",
+            'uuid': outer.uuid,
+            'username': username,
+            'text': text,
+        }));
+    }
+    receive_message(uuid, username, text) {
+        this.playground.chat_field.add_message(username, text);
+    }
+
+
 }
 
 class zsGamePlayground {
@@ -877,6 +965,7 @@ class zsGamePlayground {
         }
         else if (mode === "multi mode") {
             let outer = this;
+            this.chat_field = new ChatField(this);
             this.mps = new MultiPlayerSocket(this);
             this.mps.uuid = this.players[0].uuid;
             this.mps.ws.onopen = function () {

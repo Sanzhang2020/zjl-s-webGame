@@ -21,7 +21,6 @@ class player extends GameObject {
         this.photo = photo;
         this.speed = speed;
         this.eps = 0.01;
-        this.isAlive = true;
         this.move_length = 0;
         this.cur_skill = null;
         this.frition_damage = 0;
@@ -150,7 +149,6 @@ class player extends GameObject {
         if (this.character === "me") {
             this.playground.state = "over";
         }
-        this.isAlive = false;
         for (let i = 0; i < this.playground.players.length; i++) {
             let player = this.playground.players[i];
             if (player === this) {
@@ -167,10 +165,8 @@ class player extends GameObject {
             return false;
         });
         this.playground.gameMap.$canvas.mousedown(function (e) {
-            if (outer.playground.state !== "fighting") return false;
-            if (!outer.isAlive) {
-                return false;
-            }
+
+            if (outer.playground.state !== "fighting") return true;
             let ee = e.which;
             const rect = outer.ctx.canvas.getBoundingClientRect(); //从canvas里面获取这个矩形框框
 
@@ -209,11 +205,18 @@ class player extends GameObject {
                 outer.cur_skill = null;
             }
         });
-        $(window).keydown(function (e) {
-            if (outer.playground.state !== "fighting") return true;
-            if (!outer.isAlive) {
-                return false;
+        this.playground.gameMap.$canvas.keydown(function (e) {
+            if (e.which === 13) { //enter
+                if (outer.playground.mode === "multi mode") { //打开聊天框
+                    outer.playground.chat_field.show_input();
+                    return false;
+                }
+            } else if (e.which === 27) {
+                if (outer.playground.mode === "multi mode") {
+                    outer.playground.chat_field.hide_input();
+                }
             }
+            if (outer.playground.state !== "fighting") return true;
             let ee = e.which;
 
             if (ee === 81) { //key code ，可以去查
@@ -334,7 +337,7 @@ class player extends GameObject {
     }
     //判断this是否去世了
     isDied() {
-        if (this.radius < this.eps) {
+        if (this.radius * this.playground.scale < this.eps) {
             this.destroy();
             return true;
         }

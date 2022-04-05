@@ -119,6 +119,17 @@ class MultiPlayer(AsyncWebsocketConsumer):
                 'ty': data['ty'],
             }
         )
+    async def message(self, data):
+        await self.channel_layer.group_send(
+            self.room_name,
+            {
+                'type': "group_send_event",
+                'event': "message",
+                'uuid': data['uuid'],
+                'username': data['username'],
+                'text': data['text'],
+            }
+        )
      # 处理主机接收到的消息的函数
     async def receive(self, text_data):
         data = json.loads(text_data)
@@ -134,5 +145,7 @@ class MultiPlayer(AsyncWebsocketConsumer):
             await self.attack(data)
         elif event == "blink":
             await self.blink(data)
+        elif event == "message":
+            await self.message(data)
 
 # 模板来源于官网：https://channels.readthedocs.io/en/stable/topics/consumers.html#websocketconsumer
