@@ -7,11 +7,25 @@ class zsGamePlayground {
         this.mps = new MultiPlayerSocket(this);
         this.start();
     }
+    create_uuid() {
+        let res = "";
+        for (let i = 0; i < 8; i++) {
+            let x = parseInt(Math.floor(Math.random() * 10));   //[0, 10)
+            res += x;
+        }
+        return res;
+    }
     start() {
         let outer = this;
+        let uuid = this.create_uuid
         $(window).resize(function () {
             outer.resize();
         });
+        if (this.root.OS) {
+            outer.root.OS.api.window.on_close(function () {
+                $(window).off(`resize.${uuid}`);
+            });
+        }
     }
     resize() { //统一游戏地图比例为16:9
         //console.log("resize");
@@ -36,6 +50,7 @@ class zsGamePlayground {
         this.mode = mode;
         this.state = "waiting" //waiting -> fighting -> over
         this.noticeBoard = new NoticeBoard(this);
+        this.score_board = new ScoreBoard(this);
         this.player_count = 0;
         this.resize();
         this.players = [];
@@ -62,6 +77,25 @@ class zsGamePlayground {
 
     }
     hide() {
+        //清空游戏元素
+        while (this.players && this.players.length > 0) {
+            this.players[0].destroy();
+        }
+        if (this.gameMap) {
+            this.gameMap.destroy();
+            this.gameMap = null;
+        }
+
+        if (this.notice_board) {
+            this.notice_board.destroy();
+            this.notice_board = null;
+        }
+
+        if (this.score_board) {
+            this.score_board.destroy();
+            this.score_board = null;
+        }
+        this.$playground.empty(); //清空html标签
         this.$playground.hide();
 
     }

@@ -2,6 +2,15 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 import json
 from django.conf import settings
 from django.core.cache import cache
+
+from thrift import Thrift
+from thrift.transport import TSocket
+from thrift.transport import TTransport
+from thrift.protocol import TBinaryProtocol
+
+from match_system.src.match_server.match_service import Match
+from game.models.player.player import Player
+from channels.db import database_sync_to_async
 class MultiPlayer(AsyncWebsocketConsumer):
     async def connect(self):
         print("连接成功")
@@ -10,59 +19,41 @@ class MultiPlayer(AsyncWebsocketConsumer):
     async def disconnect(self, close_code):
         print('disconnect')
         await self.channel_layer.group_discard(self.room_name, self.channel_name);
+
     async def create_player(self, data):
         self.room_name = None
-        # 遍历所有房间，房间上限暂定为1000
-        for i in range(100000000):
-            name = "room-%d" % (i)
-            # 如果redis中之前没有这个房间，且这个房间未满3人
-            if not cache.has_key(name) or len(cache.get(name)) < settings.ROOM_CAPACITY:
-                self.room_name = name
-                break
+        self.uuid = data['uuid']
+        # Make socket
+        transport = TSocket.TSocket('127.0.0.1', 9090)
+        # Buffering is critical. Raw sockets are very slow
+        transport = TTransport.TBufferedTransport(transport)
 
-        if not self.room_name:
-            return
+        # Wrap in a protocol
+        protocol = TBinaryProtocol.TBinaryProtocol(transport)
 
-        if not cache.has_key(self.room_name):
-            # 在redis中创建一条房间数据{"房间号":[玩家uuid列表]}
-            cache.set(self.room_name, [], 3600)  # 有效期1小时
+        # Create a client to use the protocol encoder
+        client = Match.Client(protocol)
 
-        # 官网对组的详解：https://channels.readthedocs.io/en/stable/topics/channel_layers.html#groups
-        # 将玩家以房间号分组
-        # 遍历当前房间中的所有玩家
-        for player in cache.get(self.room_name):
-            # 向每个客户端广播当前玩家信息
-            await self.send(text_data=json.dumps({
-                'event': "create_player",
-                'uuid': player['uuid'],
-                'username': player['username'],
-                'photo': player['photo'],
-            }))
+        def db_get_player():
+            return Player.objects.get(user__username=data['username'])
 
-        await self.channel_layer.group_add(self.room_name, self.channel_name)
+        player = await database_sync_to_async(db_get_player)()
 
-        players = cache.get(self.room_name)
-        players.append({
-            'uuid': data['uuid'],
-            'username': data['username'],
-            'photo': data['photo']
-        })
+        # Connect!
+        transport.open()
 
-        cache.set(self.room_name, players, 3600)  # 有效期1小时
-        await self.channel_layer.group_send(
-            self.room_name,
-            {
-                # type为处理这个消息的函数名，是默认必须写的
-                'type': "group_send_event",
-                # 以下为自定义发送的消息
-                'event': "create_player",
-                'uuid': data['uuid'],
-                'username': data['username'],
-                'photo': data['photo'],
-            }
-        )
+        client.add_player(player.score, data['uuid'], data['username'], data['photo'], self.channel_name)
+
+        # Close!
+        transport.close()
+
     async def group_send_event(self, data):
-        await self.send(text_data = json.dumps(data))
+        if not self.room_name:
+            keys = cache.keys('*%s*' % (self.uuid))
+            if keys:
+                self.room_name = keys[0]
+        await self.send(text_data=json.dumps(data))
+
     async def move_to(self, data):
         await self.channel_layer.group_send(
             self.room_name,
@@ -93,7 +84,29 @@ class MultiPlayer(AsyncWebsocketConsumer):
 
         if not players:
             return
-        
+
+        for player in players:
+            if player['uuid'] == data['attacked_uuid']:
+                player['hp'] -= 25
+
+        remain_cnt = 0
+        for player in players:
+            if player['hp'] > 0:
+                remain_cnt += 1
+
+        if remain_cnt > 1:
+            if self.room_name:
+                cache.set(self.room_name, players, 3600)
+        else:
+            def db_update_player_score(username, score):
+                player = Player.objects.get(user__username=username)
+                player.score += score
+                player.save()
+            for player in players:
+                if player['hp'] <= 0:
+                    await database_sync_to_async(db_update_player_score)(player['username'], -5)
+                else:
+                    await database_sync_to_async(db_update_player_score)(player['username'], 10)
         await self.channel_layer.group_send(
             self.room_name,
             {

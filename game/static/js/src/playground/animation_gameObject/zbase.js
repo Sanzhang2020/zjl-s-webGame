@@ -7,6 +7,10 @@ class GameObject {
         this.timedelta = 0;
         this.uuid = this.create_uuid();
     }
+    late_update() { //每一帧均会执行一次，且在所有 update 执行完后才执行
+
+    }
+
     create_uuid() {
         let res = "";
         for (let i = 0; i < 8; i++) {
@@ -34,6 +38,7 @@ let last_timestamp;
 let ZS_GAME_ANIMATION = function (timestamp) {
     for (let i = 0; i < zs_game_objects.length; i++) {
         let obj = zs_game_objects[i];
+        obj.late_update();
         if (!obj.isStarted) {
             obj.start();
             obj.isStarted = true;
@@ -43,7 +48,7 @@ let ZS_GAME_ANIMATION = function (timestamp) {
         }
     }
     last_timestamp = timestamp;
-    //不断递归调用这个
+    //递归调用,无限刷新实现动画效果
     requestAnimationFrame(ZS_GAME_ANIMATION);
 };
 requestAnimationFrame(ZS_GAME_ANIMATION);

@@ -13,6 +13,8 @@ class Player(models.Model):
     photo = models.URLField(max_length = 256, blank = True)
     #用来存储第三方网站绑定的player
     openid = models.CharField(default = "", max_length = 256, blank = True, null = True)
+
+    score = models.IntegerField(default=1500)
 # 将这个表对象封装成一个str并返回，这个表需要外键user,所以会传入参数
     def __str__(self): 
         return str(self.user)

@@ -64,9 +64,16 @@ class player extends GameObject {
         if (this.character === "me" && this.playground.state === "fighting") {
             this.update_cold_time();
         }
-
+        this.update_win();
         this.update_move();
         this.update_AI();
+    }
+    update_win() {
+        // 竞赛状态，且只有一名玩家，且改名玩家就是我，则胜利
+        if (this.playground.state === "fighting" && this.character === "me" && this.playground.players.length === 1) {
+            this.playground.state = "over";
+            this.playground.score_board.win();
+        }
     }
     render() {
         let scale = this.playground.scale;
@@ -146,8 +153,9 @@ class player extends GameObject {
         this.move_length = 0; //闪现完停止；
     }
     on_destroy() { //在死之前干掉它，不然死了还能发炮弹
-        if (this.character === "me") {
+        if (this.character === "me" && this.playground.state === "fighting") {
             this.playground.state = "over";
+            this.playground.score_board.lose();
         }
         for (let i = 0; i < this.playground.players.length; i++) {
             let player = this.playground.players[i];
