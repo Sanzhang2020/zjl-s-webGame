@@ -1,0 +1,17 @@
+[2022-04-28 22:04:18.248] [exthost] [info] Extension host with pid 1029175 started
+[2022-04-28 22:04:18.266] [exthost] [info] Lock '/home/zjl/.vscode-server/data/User/workspaceStorage/2074cc806682da7ab43325e33433e1e3/vscode.lock': Lock acquired.
+[2022-04-28 22:04:18.385] [exthost] [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: true, activationEvent: '*'
+[2022-04-28 22:04:18.412] [exthost] [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*', root cause: vscode.github
+[2022-04-28 22:04:18.714] [exthost] [info] ExtensionService#_doActivateExtension vscode.git, startup: true, activationEvent: '*'
+[2022-04-28 22:04:18.845] [exthost] [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+[2022-04-28 22:04:19.655] [exthost] [info] ExtensionService#_doActivateExtension vscode.emmet, startup: false, activationEvent: 'onStartupFinished'
+[2022-04-28 22:04:19.766] [exthost] [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+[2022-04-28 22:04:19.781] [exthost] [info] Eager extensions activated
+[2022-04-28 22:04:20.101] [exthost] [warning] [Decorations] CAPPING events from decorations provider vscode.git 1792
+[2022-04-28 22:05:24.937] [exthost] [warning] [Decorations] CAPPING events from decorations provider vscode.git 1793
+[2022-04-28 22:05:30.140] [exthost] [warning] [Decorations] CAPPING events from decorations provider vscode.git 1789
+[2022-04-28 22:05:50.370] [exthost] [warning] [Decorations] CAPPING events from decorations provider vscode.git 1793
+[2022-04-28 22:48:31.687] [exthost] [warning] [Decorations] CAPPING events from decorations provider vscode.git 1796
+[2022-04-28 23:06:49.903] [exthost] [info] extension host terminating: received terminate message from renderer
+[2022-04-28 23:06:49.903] [exthost] [info] Lock '/home/zjl/.vscode-server/data/User/workspaceStorage/2074cc806682da7ab43325e33433e1e3/vscode.lock': Marking the lockfile as scheduled to be released in 6000 ms.
+[2022-04-28 23:06:49.926] [exthost] [info] Extension host with pid 1029175 exiting with code 0

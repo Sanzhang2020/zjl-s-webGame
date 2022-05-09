@@ -1,0 +1,39 @@
+[2022-04-28 21:10:48.239] [remoteagent] [info] 
+
+*
+* Visual Studio Code Server
+*
+* Reminder: You may only use this software with Visual Studio family products,
+* as described in the license https://aka.ms/vscode-remote/license
+*
+
+
+[2022-04-28 21:10:48.239] [remoteagent] [info] Extension host agent started.
+[2022-04-28 21:10:51.941] [remoteagent] [info] [127.0.0.1][5c9f9ccb][ManagementConnection] New connection established.
+[2022-04-28 21:10:51.943] [remoteagent] [info] [127.0.0.1][7f5686fc][ExtensionHostConnection] New connection established.
+[2022-04-28 21:10:51.949] [remoteagent] [info] [127.0.0.1][7f5686fc][ExtensionHostConnection] <1022851> Launched Extension Host Process.
+[2022-04-28 21:17:16.413] [remoteagent] [info] [127.0.0.1][f9903603][ManagementConnection] New connection established.
+[2022-04-28 21:17:16.432] [remoteagent] [info] [127.0.0.1][e7f20d01][ExtensionHostConnection] New connection established.
+[2022-04-28 21:17:16.436] [remoteagent] [info] [127.0.0.1][e7f20d01][ExtensionHostConnection] <1025241> Launched Extension Host Process.
+[2022-04-28 21:17:28.244] [remoteagent] [info] [127.0.0.1][f9903603][ManagementConnection] The client has disconnected gracefully, so the connection will be disposed.
+[2022-04-28 21:17:30.438] [remoteagent] [info] [127.0.0.1][5ea263b3][ManagementConnection] New connection established.
+[2022-04-28 21:17:30.468] [remoteagent] [info] [127.0.0.1][7762e3ed][ExtensionHostConnection] New connection established.
+[2022-04-28 21:17:30.475] [remoteagent] [info] [127.0.0.1][7762e3ed][ExtensionHostConnection] <1025406> Launched Extension Host Process.
+[2022-04-28 21:17:31.824] [remoteagent] [warning] [File Watcher (parcel)] correcting a path to watch that seems to be a symbolic link (original: /bin, real: /usr/bin)
+[2022-04-28 21:17:59.248] [remoteagent] [info] [127.0.0.1][3579aa4d][ManagementConnection] New connection established.
+[2022-04-28 21:17:59.310] [remoteagent] [info] [127.0.0.1][4a50ad81][ExtensionHostConnection] New connection established.
+[2022-04-28 21:17:59.317] [remoteagent] [info] [127.0.0.1][4a50ad81][ExtensionHostConnection] <1026488> Launched Extension Host Process.
+[2022-04-28 21:18:27.659] [remoteagent] [info] [127.0.0.1][3579aa4d][ManagementConnection] The client has disconnected gracefully, so the connection will be disposed.
+[2022-04-28 21:18:27.671] [remoteagent] [info] [127.0.0.1][4a50ad81][ExtensionHostConnection] <1026488> Extension Host Process exited with code: 0, signal: null.
+[2022-04-28 21:18:29.777] [remoteagent] [info] [127.0.0.1][2633d011][ManagementConnection] New connection established.
+[2022-04-28 21:18:29.857] [remoteagent] [info] [127.0.0.1][381aed5a][ExtensionHostConnection] New connection established.
+[2022-04-28 21:18:29.877] [remoteagent] [info] [127.0.0.1][381aed5a][ExtensionHostConnection] <1026756> Launched Extension Host Process.
+[2022-04-28 21:22:30.539] [remoteagent] [info] [127.0.0.1][e7f20d01][ExtensionHostConnection] <1025241> Extension Host Process exited with code: 0, signal: null.
+[2022-04-28 21:23:55.383] [remoteagent] [info] [127.0.0.1][2633d011][ManagementConnection] The client has disconnected gracefully, so the connection will be disposed.
+[2022-04-28 21:23:55.401] [remoteagent] [info] [127.0.0.1][381aed5a][ExtensionHostConnection] <1026756> Extension Host Process exited with code: 0, signal: null.
+[2022-04-28 21:24:02.598] [remoteagent] [info] [127.0.0.1][5ea263b3][ManagementConnection] The client has disconnected gracefully, so the connection will be disposed.
+[2022-04-28 21:24:02.616] [remoteagent] [info] [127.0.0.1][7762e3ed][ExtensionHostConnection] <1025406> Extension Host Process exited with code: 0, signal: null.
+[2022-04-28 21:24:05.151] [remoteagent] [info] [127.0.0.1][5c9f9ccb][ManagementConnection] The client has disconnected gracefully, so the connection will be disposed.
+[2022-04-28 21:24:05.196] [remoteagent] [info] [127.0.0.1][7f5686fc][ExtensionHostConnection] <1022851> Extension Host Process exited with code: 0, signal: null.
+[2022-04-28 21:24:05.196] [remoteagent] [info] Last EH closed, waiting before shutting down
+[2022-04-28 21:29:05.198] [remoteagent] [info] Last EH closed, shutting down

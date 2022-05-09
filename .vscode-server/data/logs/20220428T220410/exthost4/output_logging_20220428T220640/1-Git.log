@@ -1,0 +1,82 @@
+Validating found git in: git
+Using git 2.25.1 from git
+Opening repository for path='/etc/nginx' failed; ex=Failed to execute git {
+  "exitCode": 128,
+  "gitErrorCode": "NotAGitRepository",
+  "gitCommand": "rev-parse",
+  "stdout": "",
+  "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+}
+Opening repository for path='/etc/nginx/cert' failed; ex=Failed to execute git {
+  "exitCode": 128,
+  "gitErrorCode": "NotAGitRepository",
+  "gitCommand": "rev-parse",
+  "stdout": "",
+  "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+}
+Opening repository for path='/etc/nginx/conf.d' failed; ex=Failed to execute git {
+  "exitCode": 128,
+  "gitErrorCode": "NotAGitRepository",
+  "gitCommand": "rev-parse",
+  "stdout": "",
+  "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+}
+Opening repository for path='/etc/nginx/fastcgi.conf' failed; ex=Error: spawn ENOTDIR
+Opening repository for path='/etc/nginx/fastcgi_params' failed; ex=Error: spawn ENOTDIR
+Opening repository for path='/etc/nginx/koi-utf' failed; ex=Error: spawn ENOTDIR
+Opening repository for path='/etc/nginx/koi-win' failed; ex=Error: spawn ENOTDIR
+Opening repository for path='/etc/nginx/mime.types' failed; ex=Error: spawn ENOTDIR
+Opening repository for path='/etc/nginx/modules-available' failed; ex=Failed to execute git {
+  "exitCode": 128,
+  "gitErrorCode": "NotAGitRepository",
+  "gitCommand": "rev-parse",
+  "stdout": "",
+  "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+}
+Opening repository for path='/etc/nginx/modules-enabled' failed; ex=Failed to execute git {
+  "exitCode": 128,
+  "gitErrorCode": "NotAGitRepository",
+  "gitCommand": "rev-parse",
+  "stdout": "",
+  "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+}
+Opening repository for path='/etc/nginx/nginx.conf' failed; ex=Error: spawn ENOTDIR
+Opening repository for path='/etc/nginx/proxy_params' failed; ex=Error: spawn ENOTDIR
+Opening repository for path='/etc/nginx/scgi_params' failed; ex=Error: spawn ENOTDIR
+Opening repository for path='/etc/nginx/sites-available' failed; ex=Failed to execute git {
+  "exitCode": 128,
+  "gitErrorCode": "NotAGitRepository",
+  "gitCommand": "rev-parse",
+  "stdout": "",
+  "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+}
+Opening repository for path='/etc/nginx/sites-enabled' failed; ex=Failed to execute git {
+  "exitCode": 128,
+  "gitErrorCode": "NotAGitRepository",
+  "gitCommand": "rev-parse",
+  "stdout": "",
+  "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+}
+Opening repository for path='/etc/nginx/snippets' failed; ex=Failed to execute git {
+  "exitCode": 128,
+  "gitErrorCode": "NotAGitRepository",
+  "gitCommand": "rev-parse",
+  "stdout": "",
+  "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+}
+Opening repository for path='/etc/nginx/uwsgi_params' failed; ex=Error: spawn ENOTDIR
+Opening repository for path='/etc/nginx/win-utf' failed; ex=Error: spawn ENOTDIR
+Opening repository for path='/etc/nginx' failed; ex=Failed to execute git {
+  "exitCode": 128,
+  "gitErrorCode": "NotAGitRepository",
+  "gitCommand": "rev-parse",
+  "stdout": "",
+  "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+}
+Opening repository for path='/etc/nginx' failed; ex=Failed to execute git {
+  "exitCode": 128,
+  "gitErrorCode": "NotAGitRepository",
+  "gitCommand": "rev-parse",
+  "stdout": "",
+  "stderr": "fatal: not a git repository (or any of the parent directories): .git\n"
+}

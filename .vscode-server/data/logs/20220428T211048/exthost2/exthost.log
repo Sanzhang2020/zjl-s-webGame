@@ -1,0 +1,10 @@
+[2022-04-28 21:17:17.920] [exthost] [info] Extension host with pid 1025241 started
+[2022-04-28 21:17:17.988] [exthost] [info] ExtensionService#_doActivateExtension vscode.debug-auto-launch, startup: true, activationEvent: '*'
+[2022-04-28 21:17:18.004] [exthost] [info] ExtensionService#_doActivateExtension vscode.git-base, startup: true, activationEvent: '*', root cause: vscode.github
+[2022-04-28 21:17:18.045] [exthost] [info] ExtensionService#_doActivateExtension vscode.git, startup: true, activationEvent: '*'
+[2022-04-28 21:17:18.196] [exthost] [info] ExtensionService#_doActivateExtension vscode.github, startup: true, activationEvent: '*'
+[2022-04-28 21:17:18.390] [exthost] [info] ExtensionService#_doActivateExtension vscode.emmet, startup: false, activationEvent: 'onStartupFinished'
+[2022-04-28 21:17:18.433] [exthost] [info] ExtensionService#_doActivateExtension vscode.merge-conflict, startup: false, activationEvent: 'onStartupFinished'
+[2022-04-28 21:17:18.442] [exthost] [info] Eager extensions activated
+[2022-04-28 21:22:30.512] [exthost] [info] extension host terminating: renderer disconnected for too long (2)
+[2022-04-28 21:22:30.528] [exthost] [info] Extension host with pid 1025241 exiting with code 0

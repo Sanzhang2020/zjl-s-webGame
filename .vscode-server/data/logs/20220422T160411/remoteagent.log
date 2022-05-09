@@ -1,0 +1,19 @@
+[2022-04-22 16:04:12.065] [remoteagent] [info] 
+
+*
+* Visual Studio Code Server
+*
+* Reminder: You may only use this software with Visual Studio family products,
+* as described in the license https://aka.ms/vscode-remote/license
+*
+
+
+[2022-04-22 16:04:12.066] [remoteagent] [info] Extension host agent started.
+[2022-04-22 16:04:17.617] [remoteagent] [info] [127.0.0.1][b786559c][ManagementConnection] New connection established.
+[2022-04-22 16:04:17.619] [remoteagent] [info] [127.0.0.1][1efe7399][ExtensionHostConnection] New connection established.
+[2022-04-22 16:04:17.624] [remoteagent] [info] [127.0.0.1][1efe7399][ExtensionHostConnection] <595789> Launched Extension Host Process.
+[2022-04-23 00:24:43.807] [remoteagent] [info] [127.0.0.1][b786559c][ManagementConnection] The client has disconnected, will wait for reconnection 3h before disposing...
+[2022-04-23 03:24:50.074] [remoteagent] [info] [127.0.0.1][b786559c][ManagementConnection] The reconnection grace time of 3h has expired, so the connection will be disposed.
+[2022-04-23 03:24:52.294] [remoteagent] [info] [127.0.0.1][1efe7399][ExtensionHostConnection] <595789> Extension Host Process exited with code: 0, signal: null.
+[2022-04-23 03:24:52.295] [remoteagent] [info] Last EH closed, waiting before shutting down
+[2022-04-23 03:29:52.297] [remoteagent] [info] Last EH closed, shutting down
